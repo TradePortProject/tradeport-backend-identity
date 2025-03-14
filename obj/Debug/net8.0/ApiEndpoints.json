@@ -1,0 +1,34 @@
+[
+  {
+    "ContainingType": "UserManagement.Controllers.UserController",
+    "Method": "RegisterUser",
+    "RelativePath": "api/User/registeruser",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "newUser",
+        "Type": "UserManagement.Models.User",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "UserManagement.Controllers.UserController",
+    "Method": "ValidateGoogleUser",
+    "RelativePath": "api/User/validategoogleuser",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idToken",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]

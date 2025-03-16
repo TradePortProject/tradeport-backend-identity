@@ -44,19 +44,49 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins",
+    builder =>
+    {
+        builder.WithOrigins("http://localhost:3001") // Add the ReactJS app origin
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials();
+    });
+});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(7237); // HTTP port
+    options.ListenAnyIP(7238);
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+
+// Enable Swagger for all environments
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management API v1");
+    c.RoutePrefix = "swagger"; // Access at http://localhost:7237/swagger
+});
 
 app.UseHttpsRedirection();
 app.UseAuthentication(); // Use Authentication
 app.UseAuthorization();  // Use Authorization
 
 app.MapControllers();
+
+// Enable CORS with the specified policy
+app.UseCors("AllowSpecificOrigins");
 
 app.Run();

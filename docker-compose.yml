@@ -2,7 +2,7 @@ services:
   identityservice:
     build: .
     ports:
-      - "7237:7237".
+      - "7237:7237"
     environment:
       - ASPNETCORE_URLS=http://+:7237
       - DB_USER=sa

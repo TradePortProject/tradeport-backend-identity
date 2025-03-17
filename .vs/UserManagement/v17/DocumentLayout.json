@@ -1,33 +1,33 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Sowjanya\\UserManagement\\",
+  "WorkspaceRootPath": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|c:\\sowjanya\\usermanagement\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|c:\\sowjanya\\usermanagement\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|c:\\sowjanya\\usermanagement\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|c:\\sowjanya\\usermanagement\\repositories\\userrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|d:\\swe5006-tradeport\\tradeport\\tradeport-backend-identity\\repositories\\userrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:repositories\\userrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|c:\\sowjanya\\usermanagement\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|d:\\swe5006-tradeport\\tradeport\\tradeport-backend-identity\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|c:\\sowjanya\\usermanagement\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|d:\\swe5006-tradeport\\tradeport\\tradeport-backend-identity\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|c:\\sowjanya\\usermanagement\\repositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|d:\\swe5006-tradeport\\tradeport\\tradeport-backend-identity\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|d:\\swe5006-tradeport\\tradeport\\tradeport-backend-identity\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|d:\\swe5006-tradeport\\tradeport\\tradeport-backend-identity\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|d:\\swe5006-tradeport\\tradeport\\tradeport-backend-identity\\repositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{267019CE-ACB6-4416-ADD1-3666F7D5FE21}|UserManagement.csproj|solutionrelative:repositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -38,52 +38,54 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c64b9c2-e352-428e-a56d-0ace190b99a6}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "appsettings.Development.json",
+              "ToolTip": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\appsettings.Development.json",
+              "RelativeToolTip": "appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAABpAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-03-17T13:58:39.006Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "UserController.cs",
-              "DocumentMoniker": "C:\\Sowjanya\\UserManagement\\Controllers\\UserController.cs",
+              "DocumentMoniker": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Controllers\\UserController.cs",
               "RelativeDocumentMoniker": "Controllers\\UserController.cs",
-              "ToolTip": "C:\\Sowjanya\\UserManagement\\Controllers\\UserController.cs",
+              "ToolTip": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Controllers\\UserController.cs",
               "RelativeToolTip": "Controllers\\UserController.cs",
-              "ViewState": "AgIAADMAAAAAAAAAAADwvy4AAAAQAAAAAAAAAA==",
+              "ViewState": "AgIAABUAAAAAAAAAAAAnwCAAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-03-11T14:13:58.777Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 0,
               "Title": "UserRepository.cs",
-              "DocumentMoniker": "C:\\Sowjanya\\UserManagement\\Repositories\\UserRepository.cs",
+              "DocumentMoniker": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Repositories\\UserRepository.cs",
               "RelativeDocumentMoniker": "Repositories\\UserRepository.cs",
-              "ToolTip": "C:\\Sowjanya\\UserManagement\\Repositories\\UserRepository.cs",
+              "ToolTip": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Repositories\\UserRepository.cs",
               "RelativeToolTip": "Repositories\\UserRepository.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAUwBQAAAAIAAAAAAAAAA==",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAswBQAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-11T14:10:31.833Z"
+              "WhenOpened": "2025-03-11T14:10:31.833Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 6,
               "Title": "IUserRepository.cs",
-              "DocumentMoniker": "C:\\Sowjanya\\UserManagement\\Repositories\\IUserRepository.cs",
+              "DocumentMoniker": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Repositories\\IUserRepository.cs",
               "RelativeDocumentMoniker": "Repositories\\IUserRepository.cs",
-              "ToolTip": "C:\\Sowjanya\\UserManagement\\Repositories\\IUserRepository.cs",
+              "ToolTip": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Repositories\\IUserRepository.cs",
               "RelativeToolTip": "Repositories\\IUserRepository.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -91,51 +93,41 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 2,
               "Title": "User.cs",
-              "DocumentMoniker": "C:\\Sowjanya\\UserManagement\\Models\\User.cs",
+              "DocumentMoniker": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Models\\User.cs",
               "RelativeDocumentMoniker": "Models\\User.cs",
-              "ToolTip": "C:\\Sowjanya\\UserManagement\\Models\\User.cs",
+              "ToolTip": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Models\\User.cs",
               "RelativeToolTip": "Models\\User.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAA+wBYAAAAHAAAAAAAAAA==",
+              "ViewState": "AgIAABAAAAAAAAAAAAA9wBsAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-11T13:49:21.461Z"
+              "WhenOpened": "2025-03-11T13:49:21.461Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "appsettings.Development.json",
-              "DocumentMoniker": "C:\\Sowjanya\\UserManagement\\appsettings.Development.json",
-              "RelativeDocumentMoniker": "appsettings.Development.json",
-              "ToolTip": "C:\\Sowjanya\\UserManagement\\appsettings.Development.json",
-              "RelativeToolTip": "appsettings.Development.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAsAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-03-11T13:42:32.824Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Sowjanya\\UserManagement\\Program.cs",
+              "DocumentMoniker": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "C:\\Sowjanya\\UserManagement\\Program.cs",
+              "ToolTip": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAA6AAAAAAAAAA==",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAABcAAACDAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-03-11T13:42:31.685Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Sowjanya\\UserManagement\\appsettings.json",
+              "DocumentMoniker": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\appsettings.json",
               "RelativeDocumentMoniker": "appsettings.json",
-              "ToolTip": "C:\\Sowjanya\\UserManagement\\appsettings.json",
+              "ToolTip": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\appsettings.json",
               "RelativeToolTip": "appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAsAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAA/AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-03-11T13:39:50.641Z"
+              "WhenOpened": "2025-03-11T13:39:50.641Z",
+              "EditorCaption": ""
             }
           ]
         }

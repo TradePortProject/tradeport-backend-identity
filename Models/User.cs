@@ -22,11 +22,11 @@ namespace UserManagement.Models
 
        
         [MaxLength(50)]
-        public byte[]? Password { get; set; } 
+        public byte[]? Password { get; set; }
 
         [MaxLength(50)]
-        public string? StrPassword { get; set; }  
-       
+        public string? StrPassword { get; set; }
+
 
         [Required]
         public int Role { get; set; } 

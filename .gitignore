@@ -1,13 +1,19 @@
-"bin/" 
-"obj/" 
-".vs/" 
-"*.suo" 
-"*.log" 
-"*.user" 
-"bin/" 
-"obj/" 
-".vs/" 
-"*.user" 
-"*.suo" 
-"*.log" 
-"*.bin"
+# Visual Studio
+.vs/*
+
+# Build artifacts
+bin/*
+obj/*
+
+# User-specific files
+*.user
+*.suo
+
+# Other
+*.vsidx
+*.v2
+*.cache
+*.dll
+*.exe
+*.pdb
+*.json

@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using System.Text;
 using UserManagement.Repositories;
 using Google.Apis.Auth;
+using UserManagement.Mappings;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 //var jwtKey = builder.Configuration["Jwt:Key"];
 //var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 //var jwtAudience = builder.Configuration["Jwt:Audience"];
-
+builder.Services.AddAutoMapper(typeof(UserAutoMapperProfiles));
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

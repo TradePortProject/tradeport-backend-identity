@@ -13,7 +13,13 @@ namespace UserManagement.Mappings
 
             // Map from UserDTO to User entity.
             CreateMap<UserDTO, User>();
-            
+
+            // Map User entity to UserDTO
+            CreateMap<User, UserDTOAuth>();
+
+            // to map DTO back to User
+            CreateMap<UserDTOAuth, User>(); 
+
         }
     }
 }

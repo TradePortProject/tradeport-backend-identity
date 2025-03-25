@@ -11,11 +11,8 @@ using UserManagement.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//var googleClientId = builder.Configuration["Google:ClientId"];
-//var jwtKey = builder.Configuration["Jwt:Key"];
-//var jwtIssuer = builder.Configuration["Jwt:Issuer"];
-//var jwtAudience = builder.Configuration["Jwt:Audience"];
 builder.Services.AddAutoMapper(typeof(UserAutoMapperProfiles));
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -30,41 +27,62 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Configure Google OAuth Token Validation
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = "https://accounts.google.com";
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = "https://accounts.google.com",
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["GoogleOAuth:ClientId"], // Fix: Use Google Client ID
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true
-        };
-    });
-
-// Configure CORS
-builder.Services.AddCors(options =>
+builder.Services.AddAuthentication(options =>
 {
-    options.AddPolicy("AllowSpecificOrigins",
-    builder =>
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.Authority = "https://accounts.google.com";
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        builder.WithOrigins("http://localhost:3001") // Add the ReactJS app origin
-               .AllowAnyHeader()
-               .AllowAnyMethod()
-               .AllowCredentials();
-    });
+        ValidateIssuer = true,
+        ValidIssuer = "https://accounts.google.com",
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Google:ClientId"], // Use Google Client ID
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true
+    };
+})
+.AddJwtBearer("CustomJWT", options =>
+{
+    var jwtKey = builder.Configuration["Jwt:Key"];
+    var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+    var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,  // As configured earlier
+        ValidateAudience = true,
+        ValidAudience = jwtAudience, // As configured earlier
+        ValidateLifetime = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), // Your JWT Key
+        ValidateIssuerSigningKey = true
+    };
 });
 
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(7237); // HTTP port
-    options.ListenAnyIP(7238);
-});
+#region
+//// Configure CORS
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowSpecificOrigins",
+//    builder =>
+//    {
+//        builder.WithOrigins("http://localhost:3001") // Add the ReactJS app origin
+//               .AllowAnyHeader()
+//               .AllowAnyMethod()
+//               .AllowCredentials();
+//    });
+//});
 
-var app = builder.Build();
+//builder.WebHost.ConfigureKestrel(options =>
+//{
+//    options.ListenAnyIP(7237); // HTTP port
+//    options.ListenAnyIP(7238);
+//});
+
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
@@ -73,21 +91,39 @@ var app = builder.Build();
 //    app.UseSwaggerUI();
 //}
 
-// Enable Swagger for all environments
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+//// Enable Swagger for all environments
+//app.UseSwagger();
+//app.UseSwaggerUI(c =>
+//{
+//    c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management API v1");
+//    c.RoutePrefix = "swagger"; // Access at http://localhost:7237/swagger
+//});
+
+//app.UseHttpsRedirection();
+//app.UseAuthentication(); // Use Authentication
+//app.UseAuthorization();  // Use Authorization
+
+//app.MapControllers();
+
+//// Enable CORS with the specified policy
+//app.UseCors("AllowSpecificOrigins");
+
+//app.Run();
+#endregion
+
+var app = builder.Build();
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management API v1");
-    c.RoutePrefix = "swagger"; // Access at http://localhost:7237/swagger
-});
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
-app.UseAuthentication(); // Use Authentication
-app.UseAuthorization();  // Use Authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
-// Enable CORS with the specified policy
-app.UseCors("AllowSpecificOrigins");
-
 app.Run();
+

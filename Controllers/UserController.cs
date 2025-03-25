@@ -14,6 +14,13 @@ using AutoMapper;
 using Azure;
 using static Google.Apis.Requests.BatchRequest;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Data;
+using System.Security.Cryptography;
+
 
 namespace UserManagement.Controllers
 {
@@ -35,6 +42,7 @@ namespace UserManagement.Controllers
         }
 
 
+        //Validating the incoming Google Token
         [HttpPost("validategoogleuser")]
         public async Task<IActionResult> ValidateGoogleUser([FromBody] string idToken)
         {
@@ -49,7 +57,11 @@ namespace UserManagement.Controllers
 
             if (user != null)
             {
-                return Ok(user); // User exists, return details
+                var userDto = _mapper.Map<UserDTOAuth>(user);
+
+                //// User exists, generate JWT token
+                var jwtToken = GenerateJwtToken(googleUser.Email, user.UserName, user.Role);
+                return Ok(new { User = userDto, Token = jwtToken });
             }
             else
             {
@@ -57,7 +69,9 @@ namespace UserManagement.Controllers
             }
         }
 
-        // Register a new user
+
+        //Registering a new user and saving the user details in the DB
+        //[Authorize(Roles = "Admin,Manufacturer")]
         [Authorize]
         [HttpPost("registeruser")]
         public async Task<IActionResult> RegisterUser([FromBody] User newUser)
@@ -125,6 +139,34 @@ namespace UserManagement.Controllers
             }
         }
 
+
+
+        private string GenerateJwtToken(string email, string name, int role)
+        {
+            string roleString = role.ToString();
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, name),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, roleString),
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(60),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        [Authorize]
         [HttpPut]
         [Route("{userID}")]
         public async Task<IActionResult> UpdateUserByID(Guid userID, [FromBody] UserDTO userDTO)

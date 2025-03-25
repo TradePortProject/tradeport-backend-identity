@@ -13,6 +13,7 @@ using UserManagement.Models.DTO;
 using AutoMapper;
 using Azure;
 using static Google.Apis.Requests.BatchRequest;
+using Microsoft.AspNetCore.Authorization;
 
 namespace UserManagement.Controllers
 {
@@ -56,6 +57,8 @@ namespace UserManagement.Controllers
             }
         }
 
+        // Register a new user
+        [Authorize]
         [HttpPost("registeruser")]
         public async Task<IActionResult> RegisterUser([FromBody] User newUser)
         {

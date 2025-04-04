@@ -26,6 +26,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(sqlBuilder.ConnectionString));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+// Add CORS service
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 // Configure Google OAuth Token Validation
 builder.Services.AddAuthentication(options =>
 {
@@ -121,6 +131,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseCors("AllowAll");
 app.UseAuthorization();
 
 app.MapControllers();

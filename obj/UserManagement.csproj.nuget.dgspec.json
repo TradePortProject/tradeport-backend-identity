@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj": {}
+    "D:\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj": {}
   },
   "projects": {
-    "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj": {
+    "D:\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj",
+        "projectUniqueName": "D:\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj",
         "projectName": "UserManagement",
-        "projectPath": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj",
+        "projectPath": "D:\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj",
         "packagesPath": "C:\\Users\\sreer\\.nuget\\packages\\",
-        "outputPath": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\obj\\",
+        "outputPath": "D:\\Tradeport\\tradeport-backend-identity\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -50,6 +50,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
             "Google.Apis.Auth": {
               "target": "Package",
               "version": "[1.69.0, )"

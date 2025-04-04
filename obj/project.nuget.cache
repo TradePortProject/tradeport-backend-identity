@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "yNbPuLpnlno=",
+  "dgSpecHash": "DPcBepcxyiQ=",
   "success": true,
-  "projectFilePath": "D:\\SWE5006-TradePort\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj",
+  "projectFilePath": "D:\\Tradeport\\tradeport-backend-identity\\UserManagement.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\sreer\\.nuget\\packages\\automapper\\13.0.1\\automapper.13.0.1.nupkg.sha512",
     "C:\\Users\\sreer\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\sreer\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
     "C:\\Users\\sreer\\.nuget\\packages\\google.apis\\1.69.0\\google.apis.1.69.0.nupkg.sha512",

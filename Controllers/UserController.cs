@@ -72,7 +72,7 @@ namespace UserManagement.Controllers
 
         //Registering a new user and saving the user details in the DB
         //[Authorize(Roles = "Admin,Manufacturer")]
-        [Authorize]
+        // [Authorize]
         [HttpPost("registeruser")]
         public async Task<IActionResult> RegisterUser([FromBody] User newUser)
         {

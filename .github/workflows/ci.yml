@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - main
+      - develop
       - "feature/**"
+      - "release/**"
   pull_request:
     branches:
       - main
+      - develop
   workflow_dispatch:
 
 concurrency:
@@ -25,7 +28,8 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x" # or "7.0.x" depending on your target
+          dotnet-version: "8.0.x"
+          cache: true
 
       - name: Restore Dependencies
         run: dotnet restore
@@ -39,6 +43,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+          cache: true
       - run: dotnet format --verify-no-changes --severity error
 
   unit-test:
@@ -50,11 +55,27 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-      - run: dotnet test --no-build --collect:"XPlat Code Coverage"
+          cache: true
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Run tests with coverage
+        run: dotnet test --configuration Release --no-restore --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
       - uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: "**/TestResults/"
+          retention-days: 7
+      - name: Generate code coverage report
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.2.0
+        with:
+          reports: '**/TestResults/**/coverage.cobertura.xml'
+          targetdir: 'coveragereport'
+          reporttypes: 'HtmlInline_AzurePipelines;Cobertura;Badges'
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coveragereport
           retention-days: 7
 
   build:
@@ -66,6 +87,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+          cache: true
       - run: dotnet build --no-restore --configuration Release
       - uses: actions/upload-artifact@v4
         with:
@@ -83,8 +105,16 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-      - run: dotnet list package --vulnerable > security-report.txt || true
+          cache: true
+      - run: dotnet list package --vulnerable --include-transitive > security-report.txt || true
       - run: cat security-report.txt
+      - name: Check for high severity vulnerabilities
+        run: |
+          if grep -i "Severity.*High\|Severity.*Critical" security-report.txt; then
+            echo "⚠️ High or Critical severity vulnerabilities detected"
+            # Uncomment line below to fail the pipeline on severe vulnerabilities
+            # exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: security-report
@@ -95,7 +125,7 @@ jobs:
     name: ☢️ SonarQube Analysis
     runs-on: ubuntu-latest
     needs: security-scan
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request' && github.base_ref == 'main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop')
     steps:
       - uses: actions/checkout@v4
         with:
@@ -105,23 +135,34 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+          cache: true
+
+      - name: Install SonarScanner
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Begin SonarQube Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner begin \
+          /k:"${{ secrets.SONAR_PROJECT_KEY }}" \
+          /o:"${{ secrets.SONAR_ORGANIZATION }}" \
+          /d:sonar.host.url="https://sonarcloud.io" \
+          /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.cobertura.xml" \
+          /d:sonar.coverage.exclusions="**Tests.cs,**/Program.cs" \
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Restore and build
         run: |
           dotnet restore
-          dotnet build --no-incremental
+          dotnet build --no-incremental --configuration Release
 
       - name: Run tests
-        run: dotnet test --no-build --collect:"XPlat Code Coverage"
+        run: dotnet test --no-build --collect:"XPlat Code Coverage" --configuration Release
 
-      - name: SonarQube Scan
-        uses: sonarsource/sonarcloud-github-action@master
+      - name: End SonarQube Analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.cs.opencover.reportsPaths=**/TestResults/**/coverage.cobertura.xml
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"

@@ -150,10 +150,10 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Install dotnet-outdated tool
-        run: dotnet tool install --global dotnet-outdated-tool
+        run: dotnet tool install --global dotnet-outdated-tool --version 6.0.0
 
       - name: Check for outdated packages
-        run: dotnet outdated --output outdated-packages.json --format json
+        run: dotnet outdated --output outdated-packages.json
 
       - name: Generate outdated packages report
         run: |

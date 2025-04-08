@@ -192,7 +192,6 @@ jobs:
           echo "## Scan Timestamp" >> security-summary.md
           echo "$(date)" >> security-summary.md
           echo "## Workflow Run" >> security-summary.md
-          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> security-summary.md
           echo "## Results" >> security-summary.md
           echo "- Check the workflow artifacts for detailed reports" >> security-summary.md
 

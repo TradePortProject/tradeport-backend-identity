@@ -15,7 +15,7 @@ namespace UserManagement.Data
         {
             AppDbContext = _AppDbContext;
         }
-      
+
         public IQueryable<T> FindAll()
         {
             return AppDbContext.Set<T>().AsNoTracking();

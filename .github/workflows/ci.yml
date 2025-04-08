@@ -1,4 +1,4 @@
-name: "CI - .NET Identity Microservice"
+name: "CI - Stage 1 - .NET Identity Microservice"
 
 on:
   push:
@@ -52,14 +52,16 @@ jobs:
     needs: build-and-test
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-      
+
+      # - name: Code Format Check
+      #   run: dotnet format --verify-no-changes --severity error
       - name: Code Format Check
-        run: dotnet format --verify-no-changes --severity error
+        run: dotnet format UserManagement.sln --verify-no-changes --severity error
 
       - name: Install SonarScanner
         run: dotnet tool install --global dotnet-sonarscanner
@@ -97,12 +99,12 @@ jobs:
     needs: build-and-test
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-      
+
       - name: NuGet Vulnerability Scan
         run: |
           dotnet restore
@@ -132,10 +134,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
@@ -146,7 +148,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=/tmp/identity-image.tar
-      
+
       - name: Upload Docker Image
         uses: actions/upload-artifact@v4
         with:

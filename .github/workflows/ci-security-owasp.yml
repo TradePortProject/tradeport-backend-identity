@@ -158,7 +158,7 @@ jobs:
         run: dotnet tool install --global dotnet-outdated-tool
 
       - name: Check for outdated packages
-        run: dotnet outdated -o outdated-packages.json -f json
+        run: dotnet outdated --output outdated-packages.json --format json
 
       - name: Generate outdated packages report
         run: |

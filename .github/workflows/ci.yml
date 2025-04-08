@@ -74,8 +74,18 @@ jobs:
     needs: [setup, lint]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
       - name: Build Solution
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration Release
+
       - uses: actions/upload-artifact@v4
         with:
           name: build-output

@@ -87,7 +87,9 @@ jobs:
   security-scan:
     name: 🛡️ NuGet Security Scan
     runs-on: ubuntu-latest
-    needs: [unit-test, build]
+    # needs: [unit-test, build]
+    needs: [build]
+
     permissions:
       contents: read
       security-events: write

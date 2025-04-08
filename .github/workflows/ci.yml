@@ -39,9 +39,9 @@ jobs:
             **/obj
           key: ${{ runner.os }}-dotnet-${{ hashFiles('**/*.csproj') }}
 
+      # Always restore dependencies regardless of cache status
       - name: Restore Dependencies
-        if: steps.cache-dotnet.outputs.cache-hit != 'true'
-        run: dotnet restore
+        run: dotnet restore --force
 
   lint:
     name: 🧪 Code Style Check

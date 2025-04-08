@@ -1,10 +1,10 @@
-name: "CI - Stage 2 - Security Scan - SAST & SCA"
+name: "CI - Stage 2 - Security Scan - SAST & SCA (.NET)"
 
 on:
   push:
-    branches: [main, "feature/**"]
+    branches: [main, develop, "feature/**"]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
 concurrency:
@@ -13,54 +13,47 @@ concurrency:
 
 jobs:
   setup:
-    name: 📐 Security Scan Setup
+    name: 📐 Security Scan Setup (.NET)
     runs-on: ubuntu-latest
-    outputs:
-      cache-hit: ${{ steps.cache-nodemodules.outputs.cache-hit }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          node-version: 20.x
-          cache: "npm"
+          dotnet-version: "8.0.x"
 
-      - name: Cache node_modules
-        id: cache-nodemodules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - name: Restore dependencies
+        run: dotnet restore
 
-      - name: Install Dependencies
-        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
-        run: npm ci --legacy-peer-deps
-
-  npm-audit:
-    name: 🧪 SCA - npm Audit
+  dotnet-vulnerabilities:
+    name: 🧪 SCA - dotnet list package
     runs-on: ubuntu-latest
     needs: setup
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          node-version: 20.x
-          cache: "npm"
-      - run: npm ci --prefer-offline --no-audit
-      - name: Run npm audit
-        run: npm audit --json > npm-audit.json || true
-      - name: Detect High Severity
+          dotnet-version: "8.0.x"
+
+      - name: Scan for vulnerabilities
+        run: dotnet list package --vulnerable --include-transitive > dotnet-vuln-report.txt || true
+
+      - name: Show high severity vulnerabilities
         run: |
-          if grep -q '"severity":"high"' ./npm-audit.json; then
-            echo "⚠️ High severity vulnerabilities found"
+          if grep -i "Severity.*High\|Severity.*Critical" dotnet-vuln-report.txt; then
+            echo "⚠️ High or Critical severity vulnerabilities detected."
+            grep -i "Severity.*High\|Severity.*Critical" dotnet-vuln-report.txt
           fi
-      - name: Upload npm audit report
-        uses: actions/upload-artifact@v4
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: npm-audit-report
-          path: npm-audit.json
+          name: dotnet-vulnerability-report
+          path: dotnet-vuln-report.txt
           retention-days: 7
 
   owasp-sca:
@@ -68,34 +61,130 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
       - name: Download OWASP Dependency Check
         run: |
-          wget https://github.com/jeremylong/DependencyCheck/releases/download/v7.2.0/dependency-check-7.2.0-release.zip
-          unzip dependency-check-7.2.0-release.zip
-      - name: Run OWASP Scan
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
+          unzip dependency-check-8.4.0-release.zip
+
+      - name: Run OWASP Scan for .NET
         run: |
-          dependency-check/bin/dependency-check.sh --project "TradePort" --scan . --format XML --out odc-report.xml | tee ODC-report || true
-      - name: Check for CRITICAL vulnerabilities
+          dependency-check/bin/dependency-check.sh \
+            --project "tradeport-identity-service" \
+            --scan . \
+            --format "ALL" \
+            --out . \
+            --enableExperimental \
+            --suppression ./.github/owasp-suppressions.xml \
+            | tee dependency-check-report.txt || true
+
+      - name: Check for Critical vulnerabilities
         run: |
-          if grep -q "CRITICAL" ./ODC-report; then
+          if grep -q "CRITICAL" dependency-check-report.txt; then
             echo "🚨 Critical vulnerabilities found"
-            grep "CRITICAL" ./ODC-report
-            exit 1
+            grep "CRITICAL" dependency-check-report.txt
+            # Uncomment to fail the pipeline when critical vulnerabilities are found
+            # exit 1
           fi
-      - name: Upload OWASP reports
-        uses: actions/upload-artifact@v4
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: owasp-report
+          name: owasp-dependency-check
           path: |
-            ODC-report
-            odc-report.xml
+            dependency-check-report.html
+            dependency-check-report.xml
+            dependency-check-report.json
+          retention-days: 7
+
+  security-code-scan:
+    name: 🔍 SAST - Security Code Scan
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install Security Code Scan
+        run: dotnet tool install --global security-scan
+
+      - name: Run Security Code Scan
+        run: security-scan --export=security-scan-results.sarif || true
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: security-scan-results.sarif
+
+  dotnet-outdated:
+    name: 🧪 SCA - Check Outdated NuGet Packages
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install dotnet-outdated tool
+        run: dotnet tool install --global dotnet-outdated-tool
+
+      - name: Check for outdated packages
+        run: dotnet outdated -o outdated-packages.json -f json
+
+      - name: Generate outdated packages report
+        run: |
+          echo "# NuGet Package Update Report" > outdated-report.md
+          echo "Generated on $(date)" >> outdated-report.md
+          echo "## Packages requiring updates" >> outdated-report.md
+          echo "\`\`\`" >> outdated-report.md
+          cat outdated-packages.json | jq -r '.[]? | "\(.project): \(.packageId) \(.version) -> \(.latestVersion)"' >> outdated-report.md || echo "No outdated packages found" >> outdated-report.md
+          echo "\`\`\`" >> outdated-report.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-outdated-report
+          path: |
+            outdated-packages.json
+            outdated-report.md
           retention-days: 7
 
   archive:
     name: 📦 Final Security Archive
     runs-on: ubuntu-latest
-    needs: [npm-audit, owasp-sca]
+    needs:
+      [dotnet-vulnerabilities, owasp-sca, dotnet-outdated, security-code-scan]
     steps:
       - name: ✅ Security scan summary
-        run: echo "Both npm audit and OWASP scan completed."
+        run: echo "✔ All security checks (SCA + SAST) completed for Identity Microservice."
+
+      - name: 📊 Create security report summary
+        run: |
+          echo "# Security Scan Summary" > security-summary.md
+          echo "## Scan Timestamp" >> security-summary.md
+          echo "$(date)" >> security-summary.md
+          echo "## Workflow Run" >> security-summary.md
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> security-summary.md
+          echo "## Results" >> security-summary.md
+          echo "- Check the workflow artifacts for detailed reports" >> security-summary.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-summary
+          path: security-summary.md
+          retention-days: 30

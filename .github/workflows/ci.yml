@@ -1,0 +1,127 @@
+name: "CI - Stage 1 - Build and Test (.NET Microservice)"
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: 📐 Setup Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x" # or "7.0.x" depending on your target
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+  lint:
+    name: 🔍 Static Code Analysis (dotnet format)
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet format --verify-no-changes --severity error
+
+  unit-test:
+    name: 🧪 Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet test --no-build --collect:"XPlat Code Coverage"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/TestResults/"
+          retention-days: 7
+
+  build:
+    name: 🏗️ Build Microservice
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet build --no-restore --configuration Release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            **/bin/Release/
+          retention-days: 1
+
+  security-scan:
+    name: 🧪 Security Scan with dotnet list package
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test, build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet list package --vulnerable > security-report.txt || true
+      - run: cat security-report.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.txt
+          retention-days: 7
+
+  sonar:
+    name: ☢️ SonarQube Analysis
+    runs-on: ubuntu-latest
+    needs: security-scan
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request' && github.base_ref == 'main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore and build
+        run: |
+          dotnet restore
+          dotnet build --no-incremental
+
+      - name: Run tests
+        run: dotnet test --no-build --collect:"XPlat Code Coverage"
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.cs.opencover.reportsPaths=**/TestResults/**/coverage.cobertura.xml

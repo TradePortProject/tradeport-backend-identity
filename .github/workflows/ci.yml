@@ -1,4 +1,4 @@
-name: "CI - Stage 1 - Build and Test (.NET Microservice)"
+name: "CI - .NET Identity Microservice"
 
 on:
   push:
@@ -18,8 +18,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  setup:
-    name: 📐 Setup Environment
+  build-and-test:
+    name: 🔄 Build & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -29,140 +29,127 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
 
       - name: Restore Dependencies
-        run: dotnet restore --use-lock-file
-
-  lint:
-    name: 🔍 Static Code Analysis (dotnet format)
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-          # No cache due to missing lock files
-      - run: dotnet format --verify-no-changes --severity error
-
-  unit-test:
-    name: 🧪 Run Unit Tests
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-          # No cache due to missing lock files
-      - name: Restore dependencies
         run: dotnet restore
-      - name: Run tests with coverage
-        run: dotnet test --configuration Release --no-restore --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
-      - uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: "**/TestResults/"
-          retention-days: 7
-      - name: Generate code coverage report
-        uses: danielpalme/ReportGenerator-GitHub-Action@5.2.0
-        with:
-          reports: "**/TestResults/**/coverage.cobertura.xml"
-          targetdir: "coveragereport"
-          reporttypes: "HtmlInline_AzurePipelines;Cobertura;Badges"
-      - name: Upload coverage report
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Upload Test Results
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: coveragereport
+          name: test-results
+          path: "**/TestResults/**"
           retention-days: 7
 
-  build:
-    name: 🏗️ Build Microservice
+  code-quality:
+    name: 🔍 Code Quality
     runs-on: ubuntu-latest
-    needs: setup
+    needs: build-and-test
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-          # No cache due to missing lock files
-      - run: dotnet build --no-restore --configuration Release
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            **/bin/Release/
-          retention-days: 1
-
-  security-scan:
-    name: 🧪 Security Scan with dotnet list package
-    runs-on: ubuntu-latest
-    needs: [lint, unit-test, build]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-          # No cache due to missing lock files
-      - run: dotnet list package --vulnerable --include-transitive > security-report.txt || true
-      - run: cat security-report.txt
-      - name: Check for high severity vulnerabilities
-        run: |
-          if grep -i "Severity.*High\|Severity.*Critical" security-report.txt; then
-            echo "⚠️ High or Critical severity vulnerabilities detected"
-            # Uncomment line below to fail the pipeline on severe vulnerabilities
-            # exit 1
-          fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: security-report
-          path: security-report.txt
-          retention-days: 7
-
-  sonar:
-    name: ☢️ SonarQube Analysis
-    runs-on: ubuntu-latest
-    needs: security-scan
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop')
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          # No cache due to missing lock files
+      
+      - name: Code Format Check
+        run: dotnet format --verify-no-changes --severity error
 
       - name: Install SonarScanner
         run: dotnet tool install --global dotnet-sonarscanner
 
       - name: Begin SonarQube Analysis
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           dotnet sonarscanner begin \
-          /k:"${{ secrets.SONAR_PROJECT_KEY }}" \
-          /o:"${{ secrets.SONAR_ORGANIZATION }}" \
+          /k:"${{ secrets.SONAR_PROJECT_KEY || 'tradeport-identity-service' }}" \
+          /o:"${{ secrets.SONAR_ORGANIZATION || github.repository_owner }}" \
           /d:sonar.host.url="https://sonarcloud.io" \
           /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.cobertura.xml" \
           /d:sonar.coverage.exclusions="**Tests.cs,**/Program.cs" \
           /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      - name: Restore and build
+      - name: Build for Analysis
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request'
         run: |
           dotnet restore
           dotnet build --no-incremental --configuration Release
 
-      - name: Run tests
-        run: dotnet test --no-build --collect:"XPlat Code Coverage" --configuration Release
-
       - name: End SonarQube Analysis
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+  security-scan:
+    name: 🛡️ Security Scanning
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      
+      - name: NuGet Vulnerability Scan
+        run: |
+          dotnet restore
+          dotnet list package --vulnerable --include-transitive > security-report.txt || true
+          cat security-report.txt
+
+      - name: Check for High Severity Vulnerabilities
+        run: |
+          if grep -i "Severity.*High\|Severity.*Critical" security-report.txt; then
+            echo "⚠️ High or Critical severity vulnerabilities detected"
+            # For initial setup, warning only
+            # exit 1
+          fi
+
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.txt
+          retention-days: 7
+
+  docker:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: [code-quality, security-scan]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: tradeport-identity:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=/tmp/identity-image.tar
+      
+      - name: Upload Docker Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: /tmp/identity-image.tar
+          retention-days: 1

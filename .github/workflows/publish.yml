@@ -1,4 +1,4 @@
-name: "CI - Docker Build & Publish (.NET Identity Microservice)"
+name: "Publish - .NET Identity Microservice"
 
 on:
   push:
@@ -8,14 +8,23 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/identity-service
+  IMAGE_NAME: ${{ github.repository_owner }}/tradeport-identity-service
 
 jobs:
-  docker:
-    name: 🐳 Build and Push Docker Image
+  publish:
+    name: 📦 Build & Publish
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,6 +33,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -57,12 +68,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
           build-args: |
             BUILD_VERSION=${{ github.ref_name }}
             BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-      - name: Scan Docker Image for Vulnerabilities
+      - name: Scan Image for Vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
@@ -70,7 +80,35 @@ jobs:
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
           
-      - name: Upload Trivy Scan Results
+      - name: Upload Scan Results
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results.sarif'
+      
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: publish
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    environment: staging
+    steps:
+      - name: Deploy to Staging Environment
+        run: |
+          echo "Deploying to staging environment..."
+          # Deployment steps would go here (e.g., kubectl, Azure CLI, AWS CLI)
+          # For demonstration purposes
+          echo "✅ Deployed to staging environment"
+  
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [publish, deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    environment: production
+    steps:
+      - name: Deploy to Production Environment
+        run: |
+          echo "Deploying to production environment..."
+          # Deployment steps would go here (e.g., kubectl, Azure CLI, AWS CLI)
+          # For demonstration purposes
+          echo "✅ Deployed to production environment"

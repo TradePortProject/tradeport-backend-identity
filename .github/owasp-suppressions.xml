@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-   <!-- Example suppression. Uncomment and modify as needed for legitimate false positives -->
+   <!-- Suppression examples - uncomment and modify as needed -->
    <!--
    <suppress>
-      <notes>This suppresses a specific CVE for a specific dependency. Add reasoning here.</notes>
-      <cve>CVE-XXXX-XXXX</cve>
+      <notes>False positive for CVE in .NET Core package</notes>
+      <packageUrl regex="true">^pkg:nuget/Microsoft\.AspNetCore\.App@.*$</packageUrl>
+      <cve>CVE-20XX-XXXXX</cve>
    </suppress>
+
    <suppress>
-      <notes>This suppresses all CVEs for a specific dependency</notes>
-      <gav>group:artifact:version</gav>
-   </suppress>
-   <suppress>
-      <notes>This suppresses all vulnerabilities for a specific dependency with a regex</notes>
-      <packageUrl regex="true">^pkg:nuget/ExamplePackage@.*$</packageUrl>
+      <notes>Temporary suppression until dependency can be updated</notes>
+      <packageUrl regex="true">^pkg:nuget/Vulnerable\.Package@1\.2\.3$</packageUrl>
+      <vulnerabilityName>CVE-20XX-XXXXX</vulnerabilityName>
    </suppress>
    -->
 </suppressions>

@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Code Format Validation
-        run: dotnet format YourSolution.sln --verify-no-changes --severity error
+        run: dotnet format UserManagement.sln --verify-no-changes --severity error
 
   unit-test:
     name: 🧪 Run .NET Tests

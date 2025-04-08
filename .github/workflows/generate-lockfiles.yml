@@ -1,0 +1,67 @@
+name: "Generate Packages Lock Files"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-lockfiles:
+    name: 🔒 Generate Packages Lock Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Enable central package management
+        run: |
+          echo "Creating Directory.Packages.props file"
+          cat > Directory.Packages.props << 'EOF'
+          <Project>
+            <PropertyGroup>
+              <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+              <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+              <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+            </PropertyGroup>
+          </Project>
+          EOF
+
+      - name: Generate lock files
+        run: |
+          dotnet restore --force --use-lock-file
+          
+      - name: Check if changes exist
+        id: check_changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Changes detected, creating PR"
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes detected"
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Add package lock files for improved CI caching"
+          title: "Add package lock files for improved CI caching"
+          body: |
+            # Package Lock Files
+            
+            This PR adds packages.lock.json files and enables central package management to improve CI caching performance.
+            
+            ## Changes
+            - Added packages.lock.json files for all projects
+            - Added Directory.Packages.props for central package management
+            - Enables package lock files for improved build cache performance
+            
+            Once merged, this will allow GitHub Actions to use the .NET SDK cache with `cache: true` option.
+          branch: feature/add-package-lockfiles
+          delete-branch: true
+          base: main

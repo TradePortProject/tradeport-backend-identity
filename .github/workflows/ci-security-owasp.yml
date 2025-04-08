@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
 
       - name: Restore dependencies
         run: dotnet restore
@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
 
       - name: Scan for vulnerabilities
         run: dotnet list package --vulnerable --include-transitive > dotnet-vuln-report.txt || true
@@ -73,7 +73,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "17"
-          cache: 'maven'
+          # No cache for Java
 
       - name: Download OWASP Dependency Check
         run: |
@@ -122,7 +122,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/dotnet@master
@@ -149,7 +149,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
 
       - name: Install dotnet-outdated tool
         run: dotnet tool install --global dotnet-outdated-tool
@@ -186,7 +186,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
 
       - name: Install Security Code Scan
         run: dotnet tool install --global security-scan

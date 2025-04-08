@@ -32,7 +32,7 @@ jobs:
           cache: true
 
       - name: Restore Dependencies
-        run: dotnet restore
+        run: dotnet restore --use-lock-file
 
   lint:
     name: 🔍 Static Code Analysis (dotnet format)
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
       - run: dotnet format --verify-no-changes --severity error
 
   unit-test:
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
       - name: Restore dependencies
         run: dotnet restore
       - name: Run tests with coverage
@@ -68,9 +68,9 @@ jobs:
       - name: Generate code coverage report
         uses: danielpalme/ReportGenerator-GitHub-Action@5.2.0
         with:
-          reports: '**/TestResults/**/coverage.cobertura.xml'
-          targetdir: 'coveragereport'
-          reporttypes: 'HtmlInline_AzurePipelines;Cobertura;Badges'
+          reports: "**/TestResults/**/coverage.cobertura.xml"
+          targetdir: "coveragereport"
+          reporttypes: "HtmlInline_AzurePipelines;Cobertura;Badges"
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
@@ -87,7 +87,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
       - run: dotnet build --no-restore --configuration Release
       - uses: actions/upload-artifact@v4
         with:
@@ -105,7 +105,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
       - run: dotnet list package --vulnerable --include-transitive > security-report.txt || true
       - run: cat security-report.txt
       - name: Check for high severity vulnerabilities
@@ -135,7 +135,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-          cache: true
+          # No cache due to missing lock files
 
       - name: Install SonarScanner
         run: dotnet tool install --global dotnet-sonarscanner

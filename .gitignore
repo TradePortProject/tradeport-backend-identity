@@ -17,3 +17,4 @@ obj/*
 *.exe
 *.pdb
 *.json
+!packages.lock.json

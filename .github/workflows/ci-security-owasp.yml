@@ -144,6 +144,62 @@ jobs:
         with:
           sarif_file: security-scan-results.sarif
 
+  snyk-security-scan:
+    name: 🔍 SAST & SCA - Snyk Scan
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Setup Snyk CLI
+        uses: snyk/actions/setup@master
+
+      - name: Snyk Auth
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Run Snyk Code (SAST) Scan
+        run: snyk code test --sarif > snyk-code-results.sarif || true
+
+      - name: Run Snyk Open Source (SCA) Scan
+        run: snyk test --all-projects --sarif-file-output=snyk-oss-results.sarif || true
+
+      - name: Upload Snyk Code SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-code-results.sarif
+          category: snyk-code
+        continue-on-error: true
+
+      - name: Upload Snyk OSS SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-oss-results.sarif
+          category: snyk-oss
+        continue-on-error: true
+
+      - name: Generate Snyk HTML report
+        run: |
+          snyk test --all-projects --json | snyk-to-html -o snyk-report.html || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snyk-scan-reports
+          path: |
+            snyk-code-results.sarif
+            snyk-oss-results.sarif
+            snyk-report.html
+          retention-days: 7
+
   dotnet-outdated:
     name: 🧪 SCA - Check Outdated NuGet Packages
     runs-on: ubuntu-latest
@@ -185,7 +241,13 @@ jobs:
     name: 📦 Final Security Archive
     runs-on: ubuntu-latest
     needs:
-      [dotnet-vulnerabilities, owasp-sca, dotnet-outdated, security-code-scan]
+      [
+        dotnet-vulnerabilities,
+        owasp-sca,
+        dotnet-outdated,
+        security-code-scan,
+        snyk-security-scan,
+      ]
     steps:
       - name: ✅ Security scan summary
         run: echo "✔ All security checks (SCA + SAST) completed for Identity Microservice."

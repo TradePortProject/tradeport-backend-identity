@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Swashbuckle.AspNetCore.Annotations;
@@ -13,14 +12,14 @@ namespace UserManagement.Models
         public Guid UserID { get; set; }
 
         [Required]
-        [MaxLength(255)]       
+        [MaxLength(255)]
         public string loginID { get; set; }
 
         [Required]
         [MaxLength(255)]
-        public string UserName { get; set; } 
+        public string UserName { get; set; }
 
-       
+
         [MaxLength(50)]
         public byte[]? Password { get; set; }
 
@@ -29,21 +28,21 @@ namespace UserManagement.Models
 
 
         [Required]
-        public int Role { get; set; } 
+        public int Role { get; set; }
 
         [MaxLength(20)]
-        public string? PhoneNo { get; set; } 
+        public string? PhoneNo { get; set; }
 
         [MaxLength(500)]
-        public string? Address { get; set; } 
+        public string? Address { get; set; }
 
         [MaxLength(500)]
-        public string? Remarks { get; set; } 
+        public string? Remarks { get; set; }
 
-        public DateTime? CreatedOn { get; set; } 
+        public DateTime? CreatedOn { get; set; }
 
         public bool? IsActive { get; set; }
 
-       // public User NewUser { get; set; }
+        // public User NewUser { get; set; }
     }
 }

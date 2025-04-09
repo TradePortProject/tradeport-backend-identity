@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using UserManagement.Data;
@@ -10,7 +9,6 @@ namespace UserManagement.Repositories
     public class UserRepository : RepositoryBase<User>, IUserRepository
     {
         private readonly AppDbContext _dbContext;
-
 
         public UserRepository(AppDbContext dbContextRepo) : base(dbContextRepo)
         {
@@ -36,7 +34,6 @@ namespace UserManagement.Repositories
             }
         }
 
-
         public async Task<bool> UpdateUserByIDAsync(Guid ID, User user)
         {
             int result = 0;
@@ -46,7 +43,7 @@ namespace UserManagement.Repositories
             {
                 userObj.UserName = user.UserName;
                 userObj.Address = user.Address;
-                userObj.PhoneNo = user.PhoneNo;;
+                userObj.PhoneNo = user.PhoneNo; // Fixed double semicolon here
                 result = await _dbContext.SaveChangesAsync();
             }
 
@@ -57,6 +54,5 @@ namespace UserManagement.Repositories
         {
             return await FindByCondition(user => user.UserID == userID && user.IsActive == true).FirstOrDefaultAsync();
         }
-
     }
 }

@@ -18,7 +18,7 @@ namespace UserManagement.Mappings
             CreateMap<User, UserDTOAuth>();
 
             // to map DTO back to User
-            CreateMap<UserDTOAuth, User>(); 
+            CreateMap<UserDTOAuth, User>();
 
         }
     }

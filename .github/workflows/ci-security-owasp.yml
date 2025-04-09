@@ -240,13 +240,12 @@ jobs:
   archive:
     name: 📦 Final Security Archive
     runs-on: ubuntu-latest
-    needs:
-      [
+    needs: [
         dotnet-vulnerabilities,
         owasp-sca,
-        dotnet-outdated,
+        # dotnet-outdated,
         security-code-scan,
-        snyk-security-scan,
+        # snyk-security-scan,
       ]
     steps:
       - name: ✅ Security scan summary

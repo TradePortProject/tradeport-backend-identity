@@ -20,6 +20,8 @@ using System.Security.Claims;
 using System.Text;
 using System.Data;
 using System.Security.Cryptography;
+using UserManagement.Services;
+using Newtonsoft.Json.Linq;
 
 
 namespace UserManagement.Controllers
@@ -32,43 +34,44 @@ namespace UserManagement.Controllers
         private readonly IConfiguration _configuration;
         private readonly AppDbContext _dbcontext;
         private readonly IMapper _mapper;
+        private readonly IJwtService _jwtService;
 
-        public UserController(IUserRepository userRepository, IConfiguration configuration, AppDbContext context, IMapper mapper)
+        public UserController(IJwtService jwtService, IUserRepository userRepository, IConfiguration configuration, AppDbContext context, IMapper mapper)
         {
+            _jwtService = jwtService;
             _userRepository = userRepository;
             _configuration = configuration;
             _dbcontext = context;
             _mapper = mapper;
         }
 
-
         //Validating the incoming Google Token
         [HttpPost("validategoogleuser")]
-        public async Task<IActionResult> ValidateGoogleUser([FromBody] string idToken)
+        public async Task<IActionResult> ValidateGoogleUser([FromBody] string token)
         {
-            var googleUser = await ValidateGoogleToken(idToken);
+            var googleUser = await _jwtService.ValidateToken(token);
 
-            if (googleUser == null)
+            if (googleUser?.UserCredential != null)
             {
-                return Unauthorized("Invalid Google token.");
+                var user = await _userRepository.GetUserByEmailAsync(googleUser.UserCredential.Email);
+
+                if (user != null)
+                {
+                    var userDto = _mapper.Map<UserDTOAuth>(user);
+
+                    //// User exists, generate JWT token
+                    //var jwtToken = GenerateJwtToken(googleUser.Email, user.UserName, user.Role);
+                    //return Ok(new { User = userDto, Token = jwtToken });
+                    return Ok(userDto);
+                }
+                else
+                {
+                    return NotFound("User does not exist in the database.");
+                }
             }
 
-            var user = await _userRepository.GetUserByEmailAsync(googleUser.Email);
-
-            if (user != null)
-            {
-                var userDto = _mapper.Map<UserDTOAuth>(user);
-
-                //// User exists, generate JWT token
-                var jwtToken = GenerateJwtToken(googleUser.Email, user.UserName, user.Role);
-                return Ok(new { User = userDto, Token = jwtToken });
-            }
-            else
-            {
-                return NotFound("User does not exist in the database.");
-            }
+            return Unauthorized("Invalid Google token.");
         }
-
 
         //Registering a new user and saving the user details in the DB
         //[Authorize(Roles = "Admin,Manufacturer")]
@@ -76,13 +79,13 @@ namespace UserManagement.Controllers
         [HttpPost("registeruser")]
         public async Task<IActionResult> RegisterUser([FromBody] User newUser)
         {
-            if (newUser == null || string.IsNullOrEmpty(newUser.loginID))
+            if (string.IsNullOrEmpty(newUser?.loginID))
             {
                 return BadRequest("Invalid user data.");
             }
 
             // Convert Base64 password
-            if (!string.IsNullOrEmpty(newUser.StrPassword))
+            if (!string.IsNullOrEmpty(newUser?.StrPassword))
             {
                 try
                 {
@@ -99,6 +102,7 @@ namespace UserManagement.Controllers
             }
 
             var existingUser = await _userRepository.GetUserByEmailAsync(newUser.loginID);
+
             if (existingUser != null)
             {
                 return BadRequest("User already exists.");
@@ -113,6 +117,9 @@ namespace UserManagement.Controllers
             return result ? Ok("User registered successfully.") : StatusCode(500, "Failed to create user.");
         }
 
+        #region commented code
+
+        /* //[can delete this code: Moved to Services]
         private async Task<GoogleUser> ValidateGoogleToken(string idToken)
         {
             try
@@ -137,48 +144,40 @@ namespace UserManagement.Controllers
             {
                 return null; // Invalid token
             }
-        }
+        }*/
+        #endregion
 
-
-
-        private string GenerateJwtToken(string email, string name, int role)
+        [HttpPost("GenerateJwtToken")]
+        public string GenerateJwtToken([FromBody] UserCredentials userCredentials)
         {
-            string roleString = role.ToString();
+            var check = _jwtService.GenerateToken(userCredentials);
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, name),
-                new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, roleString),
-            };
+            _jwtService.ValidateBearerToken(check);
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(60),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return check;
         }
+
+        [HttpPost("GenerateBearerToken")]
+        public void GenerateBearerToken([FromHeader] string token)
+        {
+            _jwtService.ValidateBearerToken(token);
+        }
+
+
 
         [Authorize]
         [HttpPut]
         [Route("{userID}")]
         public async Task<IActionResult> UpdateUserByID(Guid userID, [FromBody] UserDTO userDTO)
         {
-            IActionResult response = null;
             try
             {
                 // Check if the product exists
                 var user = await _userRepository.GetUserByIDAsync(userID);
+
                 if (user == null)
                 {
-                    response = NotFound(new
+                    return NotFound(new
                     {
                         Message = "User not found.",
                         ErrorMessage = "Invalid User ID."
@@ -188,20 +187,19 @@ namespace UserManagement.Controllers
                 // Use AutoMapper to update the existing product with values from the DTO.
                 _mapper.Map(userDTO, user);
 
-
                 // Update the product in the repository
                 var result = await _userRepository.UpdateUserByIDAsync(userID, user);
 
                 if (!result)
                 {
-                    response = StatusCode(500, new
+                    return StatusCode(500, new
                     {
                         Message = "Failed to update user information.",
                         ErrorMessage = "Internal server error."
                     });
                 }
 
-                response = Ok(new
+                return Ok(new
                 {
                     Message = "User information updated successfully.",
                     ErrorMessage = string.Empty
@@ -209,25 +207,14 @@ namespace UserManagement.Controllers
             }
             catch (Exception ex)
             {
-                response = StatusCode(500, new
+                return StatusCode(500, new
                 {
                     Message = "An error occurred while updating the user information.",
                     ErrorMessage = ex.Message
                 });
             }
-            return response;
         }
 
     }
 
-
-    // Google User Model
-    public class GoogleUser
-    {
-        public string Sub { get; set; } // Unique Google ID
-        public string Email { get; set; }
-        public bool EmailVerified { get; set; }
-        public string Name { get; set; }
-        public string Picture { get; set; } // Profile Picture URL
-    }
 }

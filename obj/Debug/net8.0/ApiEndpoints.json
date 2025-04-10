@@ -1,6 +1,75 @@
 [
   {
     "ContainingType": "UserManagement.Controllers.UserController",
+    "Method": "UpdateUserByID",
+    "RelativePath": "api/User/{userID}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userID",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "userDTO",
+        "Type": "UserManagement.Models.DTO.UserDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "UserManagement.Controllers.UserController",
+    "Method": "GenerateBearerToken",
+    "RelativePath": "api/User/GenerateBearerToken",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "token",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "UserManagement.Controllers.UserController",
+    "Method": "GenerateJwtToken",
+    "RelativePath": "api/User/GenerateJwtToken",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userCredentials",
+        "Type": "UserManagement.Models.UserCredentials",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.String",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "UserManagement.Controllers.UserController",
     "Method": "RegisterUser",
     "RelativePath": "api/User/registeruser",
     "HttpMethod": "POST",
@@ -24,7 +93,7 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "idToken",
+        "Name": "token",
         "Type": "System.String",
         "IsRequired": true
       }

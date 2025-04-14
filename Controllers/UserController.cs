@@ -24,6 +24,7 @@ using UserManagement.Services;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Google.Apis.Auth.OAuth2;
+using UserManagement.Logger.interfaces;
 
 
 
@@ -38,14 +39,17 @@ namespace UserManagement.Controllers
         private readonly AppDbContext _dbcontext;
         private readonly IMapper _mapper;
         private readonly IJwtService _jwtService;
+        private readonly IAppLogger<UserController> _logger;
 
-        public UserController(IJwtService jwtService, IUserRepository userRepository, IConfiguration configuration, AppDbContext context, IMapper mapper)
+        public UserController(IJwtService jwtService, IUserRepository userRepository, IConfiguration configuration, AppDbContext context, IMapper mapper
+            , IAppLogger<UserController> logger)
         {
             _jwtService = jwtService;
             _userRepository = userRepository;
             _configuration = configuration;
             _dbcontext = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
 
@@ -53,16 +57,21 @@ namespace UserManagement.Controllers
         [HttpPost("validategoogleuser")]
         public async Task<IActionResult> ValidateGoogleUser([FromBody] string idToken)
         {
+            _logger.LogInformation("ValidateGoogleUser....");
+
             var googleUser = await ValidateGoogleToken(idToken);
 
             if (googleUser == null)
             {
+                _logger.LogError("Invalid Google token....");
                 return Unauthorized("Invalid Google token.");
             }
 
 
             if (googleUser != null)
             {
+                _logger.LogInformation("Getting User By Email..." + googleUser.Email);
+
                 var user = await _userRepository.GetUserByEmailAsync(googleUser.Email);
 
                 var userDto = _mapper.Map<UserDTOAuth>(user);
@@ -74,11 +83,14 @@ namespace UserManagement.Controllers
                 userCredentials.Role = user.Role;
 
                 //// User exists, generate JWT token
+                _logger.LogInformation("Generating JWT Token");
                 var jwtToken = GenerateJwtToken(userCredentials);
+                _logger.LogInformation("Return token" + jwtToken);
                 return Ok(new { User = userDto, Token = jwtToken });
             }
             else
             {
+                _logger.LogError("User does not exist in the database.");
                 return NotFound("User does not exist in the database.");
             }
         }
@@ -90,31 +102,37 @@ namespace UserManagement.Controllers
         [HttpPost("registeruser")]
         public async Task<IActionResult> RegisterUser([FromBody] User newUser)
         {
+            _logger.LogInformation("Entering Register User...");
             if (newUser == null || string.IsNullOrEmpty(newUser.loginID))
             {
+                _logger.LogError("Invalid user data...");
                 return BadRequest("Invalid user data.");
             }
 
             // Convert Base64 password
             if (!string.IsNullOrEmpty(newUser.StrPassword))
             {
+                _logger.LogInformation("Password of new user" + newUser.StrPassword);
                 try
                 {
                     newUser.Password = Convert.FromBase64String(newUser.StrPassword);
                 }
                 catch (FormatException)
                 {
+                    _logger.LogError("Invalid Base64 format for password.");
                     return BadRequest("Invalid Base64 format for password.");
                 }
             }
             else
             {
+                _logger.LogError("Password is required");
                 return BadRequest("Password is required.");
             }
-
+            _logger.LogInformation("Getting User by Email" +newUser.loginID);
             var existingUser = await _userRepository.GetUserByEmailAsync(newUser.loginID);
             if (existingUser != null)
             {
+                _logger.LogError("Password is required");
                 return BadRequest("User already exists.");
             }
 
@@ -122,8 +140,9 @@ namespace UserManagement.Controllers
             newUser.IsActive = true;
             newUser.CreatedOn = DateTime.Now;
 
+            _logger.LogInformation("Getting User by Email" + newUser.loginID);
             var result = await _userRepository.CreateUserAsync(newUser);
-
+            _logger.LogInformation("User registered successfully");
             return result ? Ok("User registered successfully.") : StatusCode(500, "Failed to create user.");
         }
 
@@ -169,13 +188,16 @@ namespace UserManagement.Controllers
         [Route("{userID}")]
         public async Task<IActionResult> UpdateUserByID(Guid userID, [FromBody] UserDTO userDTO)
         {
+            _logger.LogInformation("Entering Update User By ID...");
             IActionResult response = null;
             try
             {
                 // Check if the product exists
+                _logger.LogInformation("Getting User By ID..."+ userID);
                 var user = await _userRepository.GetUserByIDAsync(userID);
                 if (user == null)
                 {
+                    _logger.LogError("User not found.");
                     response = NotFound(new
                     {
                         Message = "User not found.",
@@ -186,12 +208,13 @@ namespace UserManagement.Controllers
                 // Use AutoMapper to update the existing product with values from the DTO.
                 _mapper.Map(userDTO, user);
 
-
+                _logger.LogInformation("Updating User by ID.." + userID);
                 // Update the product in the repository
                 var result = await _userRepository.UpdateUserByIDAsync(userID, user);
 
                 if (!result)
                 {
+                    _logger.LogError("Failed to update user information");
                     response = StatusCode(500, new
                     {
                         Message = "Failed to update user information.",
@@ -199,6 +222,7 @@ namespace UserManagement.Controllers
                     });
                 }
 
+                _logger.LogInformation("User information updated successfully.");
                 response = Ok(new
                 {
                     Message = "User information updated successfully.",
@@ -207,6 +231,7 @@ namespace UserManagement.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "An error occurred while updating the user information", ex.Message);
                 response = StatusCode(500, new
                 {
                     Message = "An error occurred while updating the user information.",

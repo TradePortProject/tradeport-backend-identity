@@ -5,15 +5,3 @@
 bin/*
 obj/*
 
-# User-specific files
-*.user
-*.suo
-
-# Other
-*.vsidx
-*.v2
-*.cache
-*.dll
-*.exe
-*.pdb
-*.json

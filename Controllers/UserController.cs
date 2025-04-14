@@ -20,6 +20,11 @@ using System.Security.Claims;
 using System.Text;
 using System.Data;
 using System.Security.Cryptography;
+using UserManagement.Services;
+using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Google.Apis.Auth.OAuth2;
+
 
 
 namespace UserManagement.Controllers
@@ -32,9 +37,11 @@ namespace UserManagement.Controllers
         private readonly IConfiguration _configuration;
         private readonly AppDbContext _dbcontext;
         private readonly IMapper _mapper;
+        private readonly IJwtService _jwtService;
 
-        public UserController(IUserRepository userRepository, IConfiguration configuration, AppDbContext context, IMapper mapper)
+        public UserController(IJwtService jwtService, IUserRepository userRepository, IConfiguration configuration, AppDbContext context, IMapper mapper)
         {
+            _jwtService = jwtService;
             _userRepository = userRepository;
             _configuration = configuration;
             _dbcontext = context;
@@ -53,14 +60,21 @@ namespace UserManagement.Controllers
                 return Unauthorized("Invalid Google token.");
             }
 
-            var user = await _userRepository.GetUserByEmailAsync(googleUser.Email);
 
-            if (user != null)
+            if (googleUser != null)
             {
+                var user = await _userRepository.GetUserByEmailAsync(googleUser.Email);
+
                 var userDto = _mapper.Map<UserDTOAuth>(user);
 
+                UserCredentials userCredentials = new UserCredentials();
+                userCredentials.UserID = user.UserID;
+                userCredentials.Name = user.UserName;
+                userCredentials.Email = user.loginID;
+                userCredentials.Role = user.Role;
+
                 //// User exists, generate JWT token
-                var jwtToken = GenerateJwtToken(googleUser.Email, user.UserName, user.Role);
+                var jwtToken = GenerateJwtToken(userCredentials);
                 return Ok(new { User = userDto, Token = jwtToken });
             }
             else
@@ -141,29 +155,13 @@ namespace UserManagement.Controllers
 
 
 
-        private string GenerateJwtToken(string email, string name, int role)
+        private string GenerateJwtToken(UserCredentials userCredentials)
         {
-            string roleString = role.ToString();
+            var check = _jwtService.GenerateToken(userCredentials);
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, name),
-                new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, roleString),
-            };
+            _jwtService.ValidateBearerToken(check);
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(60),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return check;
         }
 
         [Authorize]
@@ -221,13 +219,4 @@ namespace UserManagement.Controllers
     }
 
 
-    // Google User Model
-    public class GoogleUser
-    {
-        public string Sub { get; set; } // Unique Google ID
-        public string Email { get; set; }
-        public bool EmailVerified { get; set; }
-        public string Name { get; set; }
-        public string Picture { get; set; } // Profile Picture URL
-    }
 }

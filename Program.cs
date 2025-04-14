@@ -8,6 +8,11 @@ using UserManagement.Repositories;
 using Google.Apis.Auth;
 using UserManagement.Mappings;
 using UserManagement.Services;
+using UserManagement.Logger.interfaces;
+using UserManagement.Logger;
+using Serilog;
+using Serilog.Events;
+using Serilog.Filters;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +32,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(sqlBuilder.ConnectionString));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+// Configure Serilog from appsettings.json
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)  // Reads from appsettings.json
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .Filter.ByIncludingOnly(Matching.FromSource("UserManagement.Controllers.UserController"))
+    .CreateLogger();
+builder.Host.UseSerilog(); // Register Serilog
+// Register IAppLogger<T>
+builder.Services.AddScoped(typeof(IAppLogger<>), typeof(AppLogger<>));
 // Add CORS service
 builder.Services.AddCors(options =>
 {

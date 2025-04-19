@@ -50,7 +50,7 @@ jobs:
           if-no-files-found: warn
 
   build:
-    name: 🏗️ Build Frontend Image
+    name: 🏗️ Build Backend Image
     needs: prepare
     runs-on: ubuntu-latest
     steps:
@@ -81,18 +81,18 @@ jobs:
             DOCKERFILE=./Dockerfile.prod
           fi
 
-          docker build -t ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:latest \
-                      -t ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:${{ needs.prepare.outputs.version }} \
-                      -t ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:${{ needs.prepare.outputs.short_sha }} \
-                      -t ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:${{ needs.prepare.outputs.env_name }} \
+          docker build -t ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:latest \
+                      -t ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:${{ needs.prepare.outputs.version }} \
+                      -t ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:${{ needs.prepare.outputs.short_sha }} \
+                      -t ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:${{ needs.prepare.outputs.env_name }} \
                       -f $DOCKERFILE .
 
       - name: 🐳 Push Frontend Image to Docker Hub
         run: |
-          docker push ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:latest
-          docker push ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:${{ needs.prepare.outputs.version }}
-          docker push ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:${{ needs.prepare.outputs.short_sha }}
-          docker push ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:${{ needs.prepare.outputs.env_name }}
+          docker push ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:latest
+          docker push ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:${{ needs.prepare.outputs.version }}
+          docker push ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:${{ needs.prepare.outputs.short_sha }}
+          docker push ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:${{ needs.prepare.outputs.env_name }}
 
   verify:
     name: 🔍 Verify Docker Hub Push
@@ -102,7 +102,7 @@ jobs:
       - name: 🔍 Verify Docker Hub Push
         run: |
           echo "Verifying image push to Docker Hub..."
-          docker pull ${{ env.DOCKERHUB_IMAGE_FRONTEND }}:latest && \
+          docker pull ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:latest && \
             echo "✅ Successfully verified image push to Docker Hub" || \
             (echo "❌ Failed to verify image on Docker Hub" && exit 1)
 

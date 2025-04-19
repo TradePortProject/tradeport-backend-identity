@@ -51,20 +51,19 @@ namespace UserManagement.Controllers
 
         //Validating the incoming Google Token
         [HttpPost("validategoogleuser")]
-        public async Task<IActionResult> ValidateGoogleUser([FromBody] string idToken)
+        public async Task<IActionResult> ValidateGoogleUser([FromBody] string token)
         {
-            var googleUser = await ValidateGoogleToken(idToken);
+            var googleUser = await _jwtService.ValidateToken(token);
 
             if (googleUser == null)
             {
                 return Unauthorized("Invalid Google token.");
             }
 
+            var user = await _userRepository.GetUserByEmailAsync(googleUser.Email);
 
-            if (googleUser != null)
+            if (user != null)
             {
-                var user = await _userRepository.GetUserByEmailAsync(googleUser.Email);
-
                 var userDto = _mapper.Map<UserDTOAuth>(user);
 
                 UserCredentials userCredentials = new UserCredentials();
@@ -127,94 +126,89 @@ namespace UserManagement.Controllers
             return result ? Ok("User registered successfully.") : StatusCode(500, "Failed to create user.");
         }
 
-        private async Task<GoogleUser> ValidateGoogleToken(string idToken)
-        {
-            try
-            {
-                var settings = new GoogleJsonWebSignature.ValidationSettings
-                {
-                    Audience = new[] { _configuration["Google:ClientId"] } // Validate against client ID
-                };
+        //private async Task<GoogleUser> ValidateGoogleToken(string idToken)
+        //{
+        //    try
+        //    {
+        //        var settings = new GoogleJsonWebSignature.ValidationSettings
+        //        {
+        //            Audience = new[] { _configuration["Google:ClientId"] } // Validate against client ID
+        //        };
 
-                var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+        //        var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
 
-                return new GoogleUser
-                {
-                    Sub = payload.Subject,
-                    Email = payload.Email,
-                    EmailVerified = payload.EmailVerified,
-                    Name = payload.Name,
-                    Picture = payload.Picture
-                };
-            }
-            catch (Exception ex)
-            {
-                return null; // Invalid token
-            }
-        }
+        //        return new GoogleUser
+        //        {
+        //            Sub = payload.Subject,
+        //            Email = payload.Email,
+        //            EmailVerified = payload.EmailVerified,
+        //            Name = payload.Name,
+        //            Picture = payload.Picture
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return null; // Invalid token
+        //    }
+        //}
 
 
-
+        //[HttpPost("GenerateJwtToken")]
         private string GenerateJwtToken(UserCredentials userCredentials)
         {
             var check = _jwtService.GenerateToken(userCredentials);
 
-            _jwtService.ValidateBearerToken(check);
+            //_jwtService.ValidateBearerToken(check);
 
             return check;
         }
+
+
+        //[HttpPost("GenerateBearerToken")]
+        //public void GenerateBearerToken([FromHeader] string token)
+        //{
+        //    _jwtService.ValidateBearerToken(token);
+        //}
 
         [Authorize]
         [HttpPut]
         [Route("{userID}")]
         public async Task<IActionResult> UpdateUserByID(Guid userID, [FromBody] UserDTO userDTO)
         {
-            IActionResult response = null;
             try
             {
-                // Check if the product exists
+
+                if (string.IsNullOrEmpty(userDTO.UserName))
+                {
+                    return BadRequest(new { Message = "Username is invalid", ErrorMessage = "Invalid User name." });
+                }
+
+                // Check if the user exists
                 var user = await _userRepository.GetUserByIDAsync(userID);
                 if (user == null)
                 {
-                    response = NotFound(new
-                    {
-                        Message = "User not found.",
-                        ErrorMessage = "Invalid User ID."
-                    });
+                    return NotFound(new { Message = "User not found.", ErrorMessage = "Invalid User ID." });
                 }
 
-                // Use AutoMapper to update the existing product with values from the DTO.
+                // Use AutoMapper to update the existing user with values from the DTO
                 _mapper.Map(userDTO, user);
 
-
-                // Update the product in the repository
+                // Update the user in the repository
                 var result = await _userRepository.UpdateUserByIDAsync(userID, user);
 
                 if (!result)
                 {
-                    response = StatusCode(500, new
-                    {
-                        Message = "Failed to update user information.",
-                        ErrorMessage = "Internal server error."
-                    });
+                    return StatusCode(500, new { Message = "Failed to update user information.", ErrorMessage = "Internal server error." });
                 }
 
-                response = Ok(new
-                {
-                    Message = "User information updated successfully.",
-                    ErrorMessage = string.Empty
-                });
+                return Ok(new { Message = "User information updated successfully.", ErrorMessage = string.Empty });
             }
             catch (Exception ex)
             {
-                response = StatusCode(500, new
-                {
-                    Message = "An error occurred while updating the user information.",
-                    ErrorMessage = ex.Message
-                });
+                return StatusCode(500, new { Message = "An error occurred while updating the user information.", ErrorMessage = ex.Message });
             }
-            return response;
         }
+
 
     }
 

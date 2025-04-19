@@ -1,10 +1,7 @@
-﻿
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System;
-using Newtonsoft.Json;
 using UserManagement.Models;
 using UserManagement.Repositories;
 using UserManagement.Data;
@@ -48,13 +45,16 @@ namespace UserManagement.Controllers
             _mapper = mapper;
         }
 
-
-        //Validating the incoming Google Token
+        // ✅ Validate Google Token & Generate JWT
         [HttpPost("validategoogleuser")]
-        public async Task<IActionResult> ValidateGoogleUser([FromBody] string token)
+        public async Task<IActionResult> ValidateGoogleUser([FromBody] GoogleAuthRequest request)
         {
-            var googleUser = await _jwtService.ValidateToken(token);
-
+            
+            if (string.IsNullOrEmpty(request?.Token))
+            {
+                return BadRequest("Google token is missing.");
+            }
+            var googleUser = await _jwtService.ValidateToken(request.Token);
             if (googleUser == null)
             {
                 return Unauthorized("Invalid Google token.");
@@ -82,10 +82,7 @@ namespace UserManagement.Controllers
             }
         }
 
-
-        //Registering a new user and saving the user details in the DB
-        //[Authorize(Roles = "Admin,Manufacturer")]
-        // [Authorize]
+        // ✅ Register New User
         [HttpPost("registeruser")]
         public async Task<IActionResult> RegisterUser([FromBody] User newUser)
         {
@@ -94,7 +91,6 @@ namespace UserManagement.Controllers
                 return BadRequest("Invalid user data.");
             }
 
-            // Convert Base64 password
             if (!string.IsNullOrEmpty(newUser.StrPassword))
             {
                 try
@@ -122,7 +118,6 @@ namespace UserManagement.Controllers
             newUser.CreatedOn = DateTime.Now;
 
             var result = await _userRepository.CreateUserAsync(newUser);
-
             return result ? Ok("User registered successfully.") : StatusCode(500, "Failed to create user.");
         }
 
@@ -187,7 +182,11 @@ namespace UserManagement.Controllers
                 var user = await _userRepository.GetUserByIDAsync(userID);
                 if (user == null)
                 {
-                    return NotFound(new { Message = "User not found.", ErrorMessage = "Invalid User ID." });
+                    response = NotFound(new
+                    {
+                        Message = "User not found.",
+                        ErrorMessage = "Invalid User ID."
+                    });
                 }
 
                 // Use AutoMapper to update the existing user with values from the DTO
@@ -195,7 +194,6 @@ namespace UserManagement.Controllers
 
                 // Update the user in the repository
                 var result = await _userRepository.UpdateUserByIDAsync(userID, user);
-
                 if (!result)
                 {
                     return StatusCode(500, new { Message = "Failed to update user information.", ErrorMessage = "Internal server error." });

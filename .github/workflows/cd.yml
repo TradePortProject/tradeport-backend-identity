@@ -75,10 +75,10 @@ jobs:
         run: |
           # choose Dockerfile based on target environment
           if [ "${{ needs.prepare.outputs.env_name }}" = "dev" ]; then
-            DOCKERFILE=./Dockerfile.dev
+            DOCKERFILE=./Dockerfile
           else
             # for staging & prod, use the production Dockerfile
-            DOCKERFILE=./Dockerfile.prod
+            DOCKERFILE=./Dockerfile
           fi
 
           docker build -t ${{ env.DOCKERHUB_IMAGE_BACKEND_IDENTITY }}:latest \

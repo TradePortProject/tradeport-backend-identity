@@ -182,11 +182,7 @@ namespace UserManagement.Controllers
                 var user = await _userRepository.GetUserByIDAsync(userID);
                 if (user == null)
                 {
-                    response = NotFound(new
-                    {
-                        Message = "User not found.",
-                        ErrorMessage = "Invalid User ID."
-                    });
+                    return NotFound(new { Message = "User not found.", ErrorMessage = "Invalid User ID." });
                 }
 
                 // Use AutoMapper to update the existing user with values from the DTO
@@ -194,6 +190,7 @@ namespace UserManagement.Controllers
 
                 // Update the user in the repository
                 var result = await _userRepository.UpdateUserByIDAsync(userID, user);
+
                 if (!result)
                 {
                     return StatusCode(500, new { Message = "Failed to update user information.", ErrorMessage = "Internal server error." });
@@ -206,7 +203,6 @@ namespace UserManagement.Controllers
                 return StatusCode(500, new { Message = "An error occurred while updating the user information.", ErrorMessage = ex.Message });
             }
         }
-
 
     }
 

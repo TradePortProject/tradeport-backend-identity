@@ -8,8 +8,21 @@ using UserManagement.Data;
 using Google.Apis.Auth;
 using UserManagement.Models.DTO;
 using AutoMapper;
+using Azure;
+using static Google.Apis.Requests.BatchRequest;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Data;
+using System.Security.Cryptography;
 using UserManagement.Services;
+using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Google.Apis.Auth.OAuth2;
+
+
 
 namespace UserManagement.Controllers
 {
@@ -23,12 +36,7 @@ namespace UserManagement.Controllers
         private readonly IMapper _mapper;
         private readonly IJwtService _jwtService;
 
-        public UserController(
-            IJwtService jwtService,
-            IUserRepository userRepository,
-            IConfiguration configuration,
-            AppDbContext context,
-            IMapper mapper)
+        public UserController(IJwtService jwtService, IUserRepository userRepository, IConfiguration configuration, AppDbContext context, IMapper mapper)
         {
             _jwtService = jwtService;
             _userRepository = userRepository;
@@ -41,40 +49,37 @@ namespace UserManagement.Controllers
         [HttpPost("validategoogleuser")]
         public async Task<IActionResult> ValidateGoogleUser([FromBody] GoogleAuthRequest request)
         {
+            
             if (string.IsNullOrEmpty(request?.Token))
             {
                 return BadRequest("Google token is missing.");
             }
-
-            var googleUser = await ValidateGoogleToken(request.Token);
+            var googleUser = await _jwtService.ValidateToken(request.Token);
             if (googleUser == null)
             {
                 return Unauthorized("Invalid Google token.");
             }
 
             var user = await _userRepository.GetUserByEmailAsync(googleUser.Email);
-            if (user == null)
+
+            if (user != null)
             {
-                return NotFound(new { message = "User does not exist in the database." });
+                var userDto = _mapper.Map<UserDTOAuth>(user);
+
+                UserCredentials userCredentials = new UserCredentials();
+                userCredentials.UserID = user.UserID;
+                userCredentials.Name = user.UserName;
+                userCredentials.Email = user.loginID;
+                userCredentials.Role = user.Role;
+
+                // User exists, generate JWT token
+                var jwtToken = GenerateJwtToken(userCredentials);
+                return Ok(new { User = userDto, Token = jwtToken });
             }
-
-            var userDto = _mapper.Map<UserDTOAuth>(user);
-
-            var userCredentials = new UserCredentials
+            else
             {
-                UserID = user.UserID,
-                Name = user.UserName,
-                Email = user.loginID,
-                Role = user.Role
-            };
-
-            var jwtToken = GenerateJwtToken(userCredentials);
-
-            return Ok(new
-            {
-                user = userDto,
-                token = jwtToken
-            });
+                return NotFound("User does not exist in the database.");
+            }
         }
 
         // ✅ Register New User
@@ -115,81 +120,65 @@ namespace UserManagement.Controllers
             var result = await _userRepository.CreateUserAsync(newUser);
             return result ? Ok("User registered successfully.") : StatusCode(500, "Failed to create user.");
         }
+       
 
-        // ✅ Update User Info
+        //[HttpPost("GenerateJwtToken")]
+        private string GenerateJwtToken(UserCredentials userCredentials)
+        {
+            var check = _jwtService.GenerateToken(userCredentials);
+
+            //_jwtService.ValidateBearerToken(check);
+
+            return check;
+        }
+
+
+        //[HttpPost("GenerateBearerToken")]
+        //public void GenerateBearerToken([FromHeader] string token)
+        //{
+        //    _jwtService.ValidateBearerToken(token);
+        //}
+
         [Authorize]
-        [HttpPut("{userID}")]
+        [HttpPut]
+        [Route("{userID}")]
         public async Task<IActionResult> UpdateUserByID(Guid userID, [FromBody] UserDTO userDTO)
         {
             try
             {
+
+                if (string.IsNullOrEmpty(userDTO.UserName))
+                {
+                    return BadRequest(new { Message = "Username is invalid", ErrorMessage = "Invalid User name." });
+                }
+
+                // Check if the user exists
                 var user = await _userRepository.GetUserByIDAsync(userID);
                 if (user == null)
                 {
                     return NotFound(new { Message = "User not found.", ErrorMessage = "Invalid User ID." });
                 }
 
+                // Use AutoMapper to update the existing user with values from the DTO
                 _mapper.Map(userDTO, user);
 
+                // Update the user in the repository
                 var result = await _userRepository.UpdateUserByIDAsync(userID, user);
+
                 if (!result)
                 {
-                    return StatusCode(500, new
-                    {
-                        Message = "Failed to update user information.",
-                        ErrorMessage = "Internal server error."
-                    });
+                    return StatusCode(500, new { Message = "Failed to update user information.", ErrorMessage = "Internal server error." });
                 }
 
-                return Ok(new
-                {
-                    Message = "User information updated successfully.",
-                    ErrorMessage = string.Empty
-                });
+                return Ok(new { Message = "User information updated successfully.", ErrorMessage = string.Empty });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    Message = "An error occurred while updating the user information.",
-                    ErrorMessage = ex.Message
-                });
+                return StatusCode(500, new { Message = "An error occurred while updating the user information.", ErrorMessage = ex.Message });
             }
         }
 
-        // ✅ Google Token Validation
-        private async Task<GoogleUser> ValidateGoogleToken(string idToken)
-        {
-            try
-            {
-                var settings = new GoogleJsonWebSignature.ValidationSettings
-                {
-                    Audience = new[] { _configuration["Google:ClientId"] }
-                };
-
-                var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
-
-                return new GoogleUser
-                {
-                    Sub = payload.Subject,
-                    Email = payload.Email,
-                    EmailVerified = payload.EmailVerified,
-                    Name = payload.Name,
-                    Picture = payload.Picture
-                };
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        // ✅ JWT Generation
-        private string GenerateJwtToken(UserCredentials userCredentials)
-        {
-            var token = _jwtService.GenerateToken(userCredentials);
-            _jwtService.ValidateBearerToken(token);
-            return token;
-        }
     }
+
+
 }

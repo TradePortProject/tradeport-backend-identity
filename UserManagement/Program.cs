@@ -55,7 +55,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuer = true,
         ValidIssuer = "https://accounts.google.com",
         ValidateAudience = true,
-        ValidAudience = builder.Configuration["Google:ClientId"],
+        ValidAudience = builder.Configuration["Google:ClientId"], 
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true
     };
@@ -74,11 +74,11 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        ValidIssuer = jwtIssuer,
+        ValidIssuer = jwtIssuer,  
         ValidateAudience = true,
-        ValidAudience = jwtAudience,
+        ValidAudience = jwtAudience, 
         ValidateLifetime = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), 
         ValidateIssuerSigningKey = true
     };
 });
@@ -95,7 +95,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management API v1");
-        c.RoutePrefix = "swagger";
+        c.RoutePrefix = "swagger"; // Access at http://localhost:7237/swagger
     });
 }
 
@@ -115,3 +115,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

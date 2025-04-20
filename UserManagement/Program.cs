@@ -55,7 +55,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuer = true,
         ValidIssuer = "https://accounts.google.com",
         ValidateAudience = true,
-        ValidAudience = builder.Configuration["Google:ClientId"], // Use Google Client ID
+        ValidAudience = builder.Configuration["Google:ClientId"], 
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true
     };
@@ -74,11 +74,11 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        ValidIssuer = jwtIssuer,  // As configured earlier
+        ValidIssuer = jwtIssuer,  
         ValidateAudience = true,
-        ValidAudience = jwtAudience, // As configured earlier
+        ValidAudience = jwtAudience, 
         ValidateLifetime = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), // Your JWT Key
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), 
         ValidateIssuerSigningKey = true
     };
 });

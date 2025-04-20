@@ -72,7 +72,7 @@ namespace UserManagement.Controllers
                 userCredentials.Email = user.loginID;
                 userCredentials.Role = user.Role;
 
-                //// User exists, generate JWT token
+                // User exists, generate JWT token
                 var jwtToken = GenerateJwtToken(userCredentials);
                 return Ok(new { User = userDto, Token = jwtToken });
             }
@@ -120,33 +120,7 @@ namespace UserManagement.Controllers
             var result = await _userRepository.CreateUserAsync(newUser);
             return result ? Ok("User registered successfully.") : StatusCode(500, "Failed to create user.");
         }
-
-        //private async Task<GoogleUser> ValidateGoogleToken(string idToken)
-        //{
-        //    try
-        //    {
-        //        var settings = new GoogleJsonWebSignature.ValidationSettings
-        //        {
-        //            Audience = new[] { _configuration["Google:ClientId"] } // Validate against client ID
-        //        };
-
-        //        var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
-
-        //        return new GoogleUser
-        //        {
-        //            Sub = payload.Subject,
-        //            Email = payload.Email,
-        //            EmailVerified = payload.EmailVerified,
-        //            Name = payload.Name,
-        //            Picture = payload.Picture
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return null; // Invalid token
-        //    }
-        //}
-
+       
 
         //[HttpPost("GenerateJwtToken")]
         private string GenerateJwtToken(UserCredentials userCredentials)

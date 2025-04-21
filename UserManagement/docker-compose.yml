@@ -1,6 +1,7 @@
 services:
   identityservice:
     build: .
+    container_name: identityservice
     ports:
       - "7237:7237"
     environment:

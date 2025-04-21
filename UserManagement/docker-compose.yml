@@ -1,5 +1,6 @@
 services:
   identityservice:
+    image: identityservice
     build: .
     container_name: identityservice
     ports:

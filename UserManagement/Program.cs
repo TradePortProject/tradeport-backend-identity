@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:3001")
+            .WithOrigins("http://tradeport.cloud:3001")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();

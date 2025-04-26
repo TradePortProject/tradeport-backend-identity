@@ -27,8 +27,7 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>  
-    <ProjectReference Include="..\UserManagement.csproj" />  
+  <ItemGroup>      
     <ProjectReference Include="..\UserManagement\UserManagement.csproj" />
   </ItemGroup>
 

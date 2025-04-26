@@ -27,9 +27,9 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>   
-    <ProjectReference Include="..\UserManagement\UserManagement.csproj" />
-  </ItemGroup>
+<ItemGroup>      
+  <ProjectReference Include="..\UserManagement\UserManagement.csproj" />
+</ItemGroup>
 
   <ItemGroup>
     <Folder Include="TestResults\" />

@@ -116,21 +116,25 @@ namespace UserManagement.Tests.Repositories
         [Fact]
         public async Task GetUserByIDAsync_Should_Return_Active_User()
         {
-            using var context = GetInMemoryContext();
+            using var context = GetInMemoryContext(); // Assuming this creates a new in-memory database for the test.
             var userId = Guid.NewGuid();
 
+            // Adding an active user with loginID
             context.Users.Add(new User
             {
                 UserID = userId,
                 UserName = "Active User",
+                loginID = "activeuser@example.com", // Adding the loginID field
                 IsActive = true,
                 Role = 1
             });
 
+            // Adding an inactive user with loginID
             context.Users.Add(new User
             {
                 UserID = Guid.NewGuid(),
                 UserName = "Inactive User",
+                loginID = "inactiveuser@example.com", // Adding the loginID field
                 IsActive = false,
                 Role = 2
             });
@@ -140,8 +144,9 @@ namespace UserManagement.Tests.Repositories
             var repo = new UserRepository(context);
             var result = await repo.GetUserByIDAsync(userId);
 
-            Assert.NotNull(result);
-            Assert.Equal("Active User", result.UserName);
+            Assert.NotNull(result); // Ensure user is found
+            Assert.Equal("Active User", result.UserName); // Check that we got the correct user
         }
+
     }
 }

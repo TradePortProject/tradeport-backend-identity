@@ -1,12 +1,9 @@
-﻿# Run tests with code coverage
+﻿
+# Run tests with code coverage
 dotnet test --collect:"XPlat Code Coverage"
 
-UserManagement.Tests\TestResults\<GUID>\
+# Generate coverage report
+reportgenerator -reports:TestResults/**/*.xml -targetdir:coveragereport
 
-dotnet tool install --global dotnet-reportgenerator-globaltool
-
-
-reportgenerator -reports:coverage.cobertura.xml -targetdir:coveragereport -reporttypes:Html
-
-# Open the report in the default browser
-#Start-Process "coveragereport\index.html"
+# Open coverage report in browser
+Start-Process "coveragereport\index.html"

@@ -32,6 +32,10 @@
     <ProjectReference Include="..\UserManagement\UserManagement.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="TestResults\" />
+  </ItemGroup>
+
  
 
 </Project>

@@ -13,7 +13,7 @@ on:
         options: [dev, staging, prod]
 
 env:
-  DOCKERHUB_IMAGE_BACKEND: prabhulalithakrishnan/tradeport-identityservice
+  DOCKERHUB_IMAGE_BACKEND: prabhulalithakrishnan/identityservice
 
 jobs:
   prepare:

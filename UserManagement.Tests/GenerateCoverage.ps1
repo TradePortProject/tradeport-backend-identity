@@ -1,4 +1,7 @@
 ﻿
+#Install Report Generator tool
+dotnet tool install --global dotnet-reportgenerator-globaltool
+
 # Run tests with code coverage
 dotnet test --collect:"XPlat Code Coverage"
 

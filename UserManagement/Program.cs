@@ -10,6 +10,8 @@ using UserManagement.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("http://*:7237");
+
 // ✅ AutoMapper Configuration
 builder.Services.AddAutoMapper(typeof(UserAutoMapperProfiles));
 

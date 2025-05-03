@@ -1,0 +1,89 @@
+name: "CI - Stage 3 - DAST Security Scanning"
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL of the deployed application to scan"
+        required: true
+        default: "http://localhost:5000"
+
+jobs:
+  dast-scan:
+    name: 🔍 Dynamic Application Security Testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧾 Checkout Repository
+        uses: actions/checkout@v4
+
+      # Set target URL based on input or use default for local testing
+      - name: 🎯 Set Target URL
+        id: set-url
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "TARGET_URL=${{ github.event.inputs.target_url }}" >> $GITHUB_ENV
+          else
+            echo "TARGET_URL=http://localhost:5000" >> $GITHUB_ENV
+          fi
+
+      # If running on feature branch, deploy a temporary instance
+      - name: 🚀 Deploy Temporary Instance
+        if: ${{ github.ref != 'refs/heads/main' && env.TARGET_URL == 'http://localhost:5000' }}
+        run: |
+          # Build and run the application in background
+          dotnet restore
+          dotnet build
+          dotnet run --project UserManagement/UserManagement.csproj --urls=http://localhost:5000 &
+          # Wait for app to start
+          sleep 10
+          # Verify app is running
+          curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/healthz || true
+
+      # Run OWASP ZAP scan
+      - name: 🔒 Run OWASP ZAP Scan
+        uses: zaproxy/action-baseline@v0.11.0
+        with:
+          target: ${{ env.TARGET_URL }}
+          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-a -j"
+          allow_issue_writing: false
+
+      # Create rules file if it doesn't exist (first run)
+      - name: 📝 Create ZAP Rules File
+        run: |
+          mkdir -p .zap
+          touch .zap/rules.tsv
+
+      # Generate HTML Report
+      - name: 📊 Generate HTML Report
+        run: |
+          mkdir -p dast-results
+          cat zap-baseline.html > dast-results/report.html
+
+      # Upload scan results
+      - name: ⬆️ Upload DAST Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dast-scan-results
+          path: dast-results/
+
+      # Comment on PR with summary results (if PR)
+      - name: 💬 Comment on PR with Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const zap_summary = fs.readFileSync('zap-baseline-summary.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## DAST Scan Results\n\n' + zap_summary
+            });

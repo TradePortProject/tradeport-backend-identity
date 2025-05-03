@@ -1,50 +1,39 @@
-name: "CI - Stage 3 - DAST Security Scanning"
+name: "CI - Stage 3 - DAST Security Scan"
 
 on:
   workflow_dispatch:
 
 jobs:
-  dast-scan:
-    name: 🔍 DAST Scan with OWASP ZAP (Docker)
+  dast:
     runs-on: ubuntu-latest
+    name: 🔍 Run OWASP ZAP Baseline Scan
 
     steps:
-      - name: 🧾 Checkout Code
+      - name: 🧾 Checkout
         uses: actions/checkout@v4
 
-      - name: 🐳 Start Application via Docker Compose
+      - name: 🐳 Start API in Docker
         run: |
           docker-compose up -d usermanagement-api
-          echo "Waiting for app to be reachable..."
+          echo "Waiting for the API to respond..."
           for i in {1..10}; do
             sleep 5
             if curl -s http://localhost:5002 | grep -q "html"; then
-              echo "✅ App is responding"
+              echo "✅ API is up"
               break
             fi
           done
 
-      - name: 📝 Create ZAP Rules File
-        run: |
-          mkdir -p .zap
-          echo "# rules.tsv placeholder" > .zap/rules.tsv
-
-      - name: 🔒 Run OWASP ZAP Baseline Scan
+      - name: 🔒 Run OWASP ZAP
         uses: zaproxy/action-baseline@v0.11.0
         with:
           target: "http://host.docker.internal:5002"
-          cmd_options: "-a -j"
-          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-a"
           fail_action: false
           docker_name: "ghcr.io/zaproxy/zaproxy:stable"
 
-      - name: 📦 Organize DAST Report
-        run: |
-          mkdir -p dast-report
-          mv report_html.html dast-report/zap-report.html || echo "Report not found"
-
-      - name: ⬆ Upload DAST Report
+      - name: ⬆ Upload ZAP Report
         uses: actions/upload-artifact@v4
         with:
-          name: zap-dast-report
-          path: dast-report/
+          name: zap-scan-report
+          path: report_html.html

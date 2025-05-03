@@ -1,10 +1,10 @@
 name: "CI - Stage 3 - DAST Security Scanning"
 
 on:
-  push:
-    branches:
-      - main
-      - "feature/**"
+  # push:
+  #   branches:
+  #     - main
+  #     - "feature/**"
 
 jobs:
   dast:

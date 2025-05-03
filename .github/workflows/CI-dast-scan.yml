@@ -1,6 +1,13 @@
 name: "CI - Stage 3 - DAST Security Scan"
 
 on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:

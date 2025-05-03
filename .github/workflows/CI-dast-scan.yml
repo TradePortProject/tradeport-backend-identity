@@ -1,54 +1,81 @@
 name: "CI - Stage 3 - DAST Security Scanning"
 
 on:
+  push:
+    branches:
+      - main
+      - "feature/**"
   workflow_dispatch:
     inputs:
       target_url:
         description: "URL of the deployed application to scan"
         required: true
-        default: "http://localhost:5000"
+        default: "http://localhost:5002"
 
 jobs:
   dast-scan:
-    name: 🔍 Dynamic Application Security Testing
+    name: 🔍 DAST Security Scan with ZAP
     runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged
 
     steps:
       - name: 🧾 Checkout Repository
         uses: actions/checkout@v4
 
-      # ✅ Create ZAP Rules File *before* scan
-      - name: 📝 Create ZAP Rules File
+      - name: 🐳 Set up Docker Compose
+        run: |
+          docker-compose up -d usermanagement-api
+          echo "Waiting for API to start..."
+          for i in {1..10}; do
+            if curl -s --head http://localhost:5002 | grep "200 OK"; then
+              echo "✅ Service is up"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: 📝 Prepare ZAP Rules File
         run: |
           mkdir -p .zap
-          echo "# rules.tsv" > .zap/rules.tsv
+          echo "# rules.tsv placeholder" > .zap/rules.tsv
 
-      # ✅ Build and Run the App (you can replace this with Docker)
-      - name: 🚀 Run .NET App Locally
-        run: |
-          nohup dotnet run --project UserManagement/UserManagement.csproj --urls=http://0.0.0.0:5000 &
-          sleep 15
-          curl -s http://localhost:5000 || true
-
-      # ✅ Run OWASP ZAP scan (now with rule file ready)
-      - name: 🔒 Run OWASP ZAP Scan
+      - name: 🔒 Run OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.11.0
         with:
-          target: "http://localhost:5000"
+          target: ${{ github.event.inputs.target_url || 'http://localhost:5002' }}
           rules_file_name: ".zap/rules.tsv"
           cmd_options: "-a -j"
           allow_issue_writing: false
-          fail_action: false
+          fail_action: false # Ensure CI passes even with alerts
+          artifact_name: zap_scan
+          docker_name: "ghcr.io/zaproxy/zaproxy:stable"
 
-      # ✅ Generate HTML Report
-      - name: 📊 Generate HTML Report
+      - name: 📊 Collect and Upload ZAP Report
         run: |
           mkdir -p dast-results
-          cat report_html.html > dast-results/zap-report.html
+          mv report_html.html dast-results/zap-report.html
+        continue-on-error: true
 
-      # ✅ Upload Artifact
-      - name: ⬆ Upload DAST Results
+      - name: ⬆ Upload DAST Report Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dast-scan-results
+          name: dast-zap-report
           path: dast-results/
+
+      - name: 💬 Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('report_md.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## 🛡️ DAST Scan Summary\n\n' + summary
+            });

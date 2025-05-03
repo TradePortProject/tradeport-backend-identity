@@ -15,9 +15,9 @@ jobs:
       - name: 🧾 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🐳 Build & Start IdentityService
+      - name: 🐳 Start API via Docker Compose (Custom Path)
         run: |
-          docker compose up -d identityservice
+          docker compose -f UserManagement/docker-compose.yml up -d identityservice
           echo "⏳ Waiting for identityservice to respond..."
           for i in {1..10}; do
             sleep 5
@@ -60,4 +60,4 @@ jobs:
 
       - name: 🧹 Shutdown Docker Compose
         if: always()
-        run: docker compose down
+        run: docker compose -f UserManagement/docker-compose.yml down

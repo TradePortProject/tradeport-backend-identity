@@ -5,10 +5,6 @@ on:
     branches:
       - main
       - "feature/**"
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
 
 jobs:
   dast:
@@ -16,36 +12,36 @@ jobs:
     name: 🔍 Run OWASP ZAP Baseline Scan
 
     steps:
-      - name: 🧾 Checkout
+      - name: 🧾 Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🐳 Start API in Docker
+      - name: 🐳 Build & Start IdentityService
         run: |
-          docker-compose up -d usermanagement-api
-          echo "Waiting for the API to respond..."
+          docker compose up -d identityservice
+          echo "⏳ Waiting for identityservice to respond..."
           for i in {1..10}; do
             sleep 5
-            if curl -s http://localhost:5002 | grep -q "html"; then
-              echo "✅ API is up"
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:7237)
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ identityservice is running (HTTP $STATUS)"
               break
             else
-              echo "⏳ Waiting for API... Attempt $i"
+              echo "⏳ Attempt $i: Service not ready (Status: $STATUS)"
             fi
           done
 
-      - name: 📝 Prepare ZAP Work Directory
+      - name: 📝 Prepare ZAP Rules File
         run: |
           mkdir -p .zap
-          echo "# rules.tsv placeholder" > .zap/rules.tsv
+          echo "# ZAP rules placeholder" > .zap/rules.tsv
 
-      - name: 🔒 Fix Permissions for ZAP
-        run: |
-          sudo chmod -R 777 ${{ github.workspace }}
+      - name: 🔒 Set Write Permissions for ZAP
+        run: sudo chmod -R 777 ${{ github.workspace }}
 
       - name: 🔍 Run OWASP ZAP Scan
         uses: zaproxy/action-baseline@v0.11.0
         with:
-          target: "http://host.docker.internal:5002"
+          target: "http://host.docker.internal:7237"
           cmd_options: "-a -j"
           rules_file_name: ".zap/rules.tsv"
           fail_action: false
@@ -54,10 +50,14 @@ jobs:
       - name: 📦 Organize DAST Report
         run: |
           mkdir -p dast-report
-          mv report_html.html dast-report/zap-report.html || echo "No HTML report found"
+          mv report_html.html dast-report/zap-report.html || echo "⚠️ No HTML report generated"
 
       - name: ⬆ Upload ZAP Report
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-report
           path: dast-report/
+
+      - name: 🧹 Shutdown Docker Compose
+        if: always()
+        run: docker compose down

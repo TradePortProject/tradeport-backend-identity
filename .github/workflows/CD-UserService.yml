@@ -2,7 +2,7 @@ name: CD - Backend - Deploy to Dockerhub
 
 on:
   push:
-    branches: [main, develop, "feature/**"]
+    branches: [main"]
   workflow_dispatch:
     inputs:
       environment:

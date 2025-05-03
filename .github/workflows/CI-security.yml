@@ -1,0 +1,97 @@
+name: "CI - Backend - SCA & SAST Security Scan"
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0" # Every Sunday at midnight
+
+permissions:
+  contents: read
+  security-events: write # Required only if you include CodeQL (see below)
+
+jobs:
+  nuget-vulnerability-scan:
+    name: 📦 NuGet Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧾 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🧰 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: 📦 Restore Dependencies
+        run: dotnet restore
+
+      - name: 🔍 Check for Vulnerable Packages
+        run: |
+          dotnet list package --vulnerable --include-transitive > security-report.txt || true
+          if grep -qi "severity.*high\|severity.*critical" security-report.txt; then
+            echo "❌ High/Critical vulnerabilities detected!" >&2
+            exit 1
+          fi
+
+      - name: 📤 Upload NuGet Scan Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-vulnerability-report
+          path: security-report.txt
+
+  owasp-dependency-check:
+    name: ☢️ OWASP Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧾 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☢️ Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "UserManagement"
+          path: "."
+          format: "HTML"
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+
+      - name: 📤 Upload OWASP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check-report
+          path: reports
+# Optional: Only enable if you've disabled the default CodeQL setup in the repo
+#  codeql-sast:
+#    name: 🔒 CodeQL Static Analysis
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: 🧾 Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: 🔧 Initialize CodeQL
+#        uses: github/codeql-action/init@v2
+#        with:
+#          languages: csharp
+#          queries: security-extended,security-and-quality
+#
+#      - name: 🛠 Setup .NET
+#        uses: actions/setup-dotnet@v4
+#        with:
+#          dotnet-version: "8.0.x"
+#
+#      - name: 📦 Restore
+#        run: dotnet restore
+#
+#      - name: 🏗️ Build
+#        run: dotnet build --no-restore --configuration Release
+#
+#      - name: 🔍 Analyze with CodeQL
+#        uses: github/codeql-action/analyze@v2

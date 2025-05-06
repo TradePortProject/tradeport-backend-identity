@@ -1,4 +1,4 @@
-name: "CI Pipeline - Deploy Tradeport Identity Service  to Dockerhub"
+name: "CI - Backend Identity - Deploy Tradeport Identity Service  to Dockerhub"
 
 on:
   workflow_run:

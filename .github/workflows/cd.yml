@@ -11,7 +11,7 @@ name: "CI - Backend Identity - Deploy to Dockerhub"
 
 on:
   workflow_run:
-    workflows: ["CI - Backend - Build, Test & Security Scan"]
+    workflows: ["CI - Backend Identity - Build, Test & Security Scan"]
     types:
       - completed
   workflow_dispatch:

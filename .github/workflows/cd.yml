@@ -1,23 +1,40 @@
-name: CD - Backend - Deploy to Dockerhub
+# ======================================================
+# Continuous Deployment (CD) Workflow - Tradeport Backend
+# ======================================================
+# Automatically builds and pushes the .NET backend image
+# to Docker Hub when the CI pipeline completes.
+# Also supports manual deployment with environment selection.
+# Includes multi-tagging and a post-deploy health check.
+# ======================================================
+
+name: "CI - Backend Identity - Deploy to Dockerhub"
 
 on:
-  push:
-    branches: [main"]
+  workflow_run:
+    workflows: ["CI - Backend - Build, Test & Security Scan"]
+    types:
+      - completed
   workflow_dispatch:
     inputs:
       environment:
-        description: "Deployment Environment"
+        description: "Environment to deploy to"
         required: true
         default: "dev"
         type: choice
-        options: [dev, staging, prod]
+        options:
+          - dev
+          - staging
+          - prod
 
 env:
   DOCKERHUB_IMAGE_BACKEND: prabhulalithakrishnan/identityservice
 
 jobs:
   prepare:
-    name: ⛏️ Prepare
+    name: ⛏️ Prepare Deployment
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.set-outputs.outputs.version }}
@@ -34,13 +51,13 @@ jobs:
           echo "env_name=${{ github.event.inputs.environment || 'dev' }}" >> $GITHUB_OUTPUT
 
   build:
-    name: 🐳 Build and Push Docker Image
+    name: 🐳 Build and Push Backend Image
     needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🐳 Log in to Docker Hub
+      - name: 🔐 Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: 🐳 Build and Tag Image
@@ -51,18 +68,31 @@ jobs:
                        -t ${{ env.DOCKERHUB_IMAGE_BACKEND }}:${{ needs.prepare.outputs.env_name }} \
                        -f UserManagement/Dockerfile .
 
-      - name: 🚀 Push to Docker Hub
+      - name: 🚀 Push Image to Docker Hub
         run: |
           docker push ${{ env.DOCKERHUB_IMAGE_BACKEND }}:latest
           docker push ${{ env.DOCKERHUB_IMAGE_BACKEND }}:${{ needs.prepare.outputs.version }}
           docker push ${{ env.DOCKERHUB_IMAGE_BACKEND }}:${{ needs.prepare.outputs.short_sha }}
           docker push ${{ env.DOCKERHUB_IMAGE_BACKEND }}:${{ needs.prepare.outputs.env_name }}
 
-  health-check:
-    name: ❤️ Health Check
+  verify:
+    name: 🔍 Verify Docker Hub Push
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          sleep 10
-          curl -m 10 -sSf http://${{ secrets.DROPLET_IP }}:5000/health || echo "Backend may still be starting up. Please verify manually"
+      - name: 🔍 Verify Push
+        run: |
+          docker pull ${{ env.DOCKERHUB_IMAGE_BACKEND }}:latest && \
+            echo "✅ Backend image push verified" || \
+            (echo "❌ Could not verify Docker image" && exit 1)
+
+  health-check:
+    name: ❤️ Backend Health Check
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Health Check Endpoint
+        run: |
+          sleep 20
+          curl -m 10 -sSf http://${{ secrets.DROPLET_IP }}:5000/health || \
+          echo "⚠️ Backend health check may have failed. Please verify manually."

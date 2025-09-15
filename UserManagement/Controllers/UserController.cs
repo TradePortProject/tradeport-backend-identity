@@ -133,13 +133,7 @@ namespace UserManagement.Controllers
         }
 
 
-        //[HttpPost("GenerateBearerToken")]
-        //public void GenerateBearerToken([FromHeader] string token)
-        //{
-        //    _jwtService.ValidateBearerToken(token);
-        //}
-
-        [Authorize]
+        [Authorize]       
         [HttpPut]
         [Route("{userID}")]
         public async Task<IActionResult> UpdateUserByID(Guid userID, [FromBody] UserDTO userDTO)

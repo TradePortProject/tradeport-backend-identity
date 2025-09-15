@@ -7,10 +7,65 @@ using System.Text;
 using UserManagement.Repositories;
 using UserManagement.Mappings;
 using UserManagement.Services;
+using Amazon;
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
+using System.Text.Json;
+using UserManagement.Models;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("http://*:7237");
+var client = new AmazonSecretsManagerClient(RegionEndpoint.APSoutheast1);
+
+async Task LoadSecret(string secretName)
+{
+    var request = new GetSecretValueRequest
+    {
+        SecretId = secretName
+    };
+    var response = await client.GetSecretValueAsync(request);
+
+    if (response.SecretString != null)
+    {
+        var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(response.SecretString);
+        if (dict != null)
+        {
+            foreach (var kv in dict)
+            {
+                // Flatten one level (e.g. "Jwt:Key")
+                if (kv.Value is JsonElement el && el.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var inner in el.EnumerateObject())
+                    {
+                        builder.Configuration[$"{kv.Key}:{inner.Name}"] = inner.Value.ToString();
+                    }
+                }
+                else
+                {
+                    builder.Configuration[kv.Key] = kv.Value?.ToString();
+                }
+            }
+        }
+    }
+}
+
+// Load your 3 secrets
+await LoadSecret("tradeport/dev/user-mgmt/mssql-eks");
+await LoadSecret("tradeport/dev/user-mgmt/jwt");
+await LoadSecret("tradeport/dev/user-mgmt/google");
+
+// Register EF Core with SQL Server (uses ConnectionStrings:UserMgmtDb from appsettings.Development.json)
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("tradeportdb"),
+        sql => sql.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null));
+});
+
 
 // ✅ AutoMapper Configuration
 builder.Services.AddAutoMapper(typeof(UserAutoMapperProfiles));
@@ -20,14 +75,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ SQL Server Connection (with encryption)
-var sqlBuilder = new SqlConnectionStringBuilder(builder.Configuration.GetConnectionString("DefaultConnection"))
-{
-    Encrypt = true,
-    TrustServerCertificate = true
-};
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(sqlBuilder.ConnectionString));
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // ✅ CORS Policy for React Frontend
@@ -36,7 +84,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://tradeport.cloud:3001")
+            .WithOrigins("http://tradeport.cloud")    
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -89,6 +137,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddSingleton<IJwtService, JwtService>();
 
 var app = builder.Build();
+
 
 // ✅ Swagger UI for Dev
 if (app.Environment.IsDevelopment())

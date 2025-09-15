@@ -4,4 +4,21 @@
 # Build artifacts
 bin/*
 obj/*
+node_modules/
+dist/
+coverage/
+.vscode/
+.idea/
+Logs/
+*.user
+*.swp
+*.suo
+*.dll
+*.pdb
+*.log
+.env
+.env.*
+*.db
+*.db-shm
+*.db-wal
 

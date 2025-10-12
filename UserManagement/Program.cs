@@ -137,8 +137,6 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddSingleton<IJwtService, JwtService>();
 
 var app = builder.Build();
-app.MapGet("/health", () => "OK"); // Health endpoints
-app.MapGet("/ready", () => "Ready");
 
 // ✅ Swagger UI for Dev
 if (app.Environment.IsDevelopment())
@@ -150,7 +148,6 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "swagger"; // Access at http://localhost:7237/swagger
     });
 }
-app.MapGet("/", () => Results.Redirect("/swagger"));
 // ✅ Cross-Origin Isolation Headers to prevent COOP/COEP warnings
 app.Use(async (context, next) =>
 {

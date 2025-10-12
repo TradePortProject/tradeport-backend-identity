@@ -18,42 +18,42 @@ var builder = WebApplication.CreateBuilder(args);
 
 var client = new AmazonSecretsManagerClient(RegionEndpoint.APSoutheast1);
 
-async Task LoadSecret(string secretName)
-{
-    var request = new GetSecretValueRequest
-    {
-        SecretId = secretName
-    };
-    var response = await client.GetSecretValueAsync(request);
+//async Task LoadSecret(string secretName)
+//{
+//    var request = new GetSecretValueRequest
+//    {
+//        SecretId = secretName
+//    };
+//    var response = await client.GetSecretValueAsync(request);
 
-    if (response.SecretString != null)
-    {
-        var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(response.SecretString);
-        if (dict != null)
-        {
-            foreach (var kv in dict)
-            {
-                // Flatten one level (e.g. "Jwt:Key")
-                if (kv.Value is JsonElement el && el.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var inner in el.EnumerateObject())
-                    {
-                        builder.Configuration[$"{kv.Key}:{inner.Name}"] = inner.Value.ToString();
-                    }
-                }
-                else
-                {
-                    builder.Configuration[kv.Key] = kv.Value?.ToString();
-                }
-            }
-        }
-    }
-}
+//    if (response.SecretString != null)
+//    {
+//        var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(response.SecretString);
+//        if (dict != null)
+//        {
+//            foreach (var kv in dict)
+//            {
+//                // Flatten one level (e.g. "Jwt:Key")
+//                if (kv.Value is JsonElement el && el.ValueKind == JsonValueKind.Object)
+//                {
+//                    foreach (var inner in el.EnumerateObject())
+//                    {
+//                        builder.Configuration[$"{kv.Key}:{inner.Name}"] = inner.Value.ToString();
+//                    }
+//                }
+//                else
+//                {
+//                    builder.Configuration[kv.Key] = kv.Value?.ToString();
+//                }
+//            }
+//        }
+//    }
+//}
 
 // Load your 3 secrets
-await LoadSecret("tradeport/dev/user-mgmt/mssql-eks");
-await LoadSecret("tradeport/dev/user-mgmt/jwt");
-await LoadSecret("tradeport/dev/user-mgmt/google");
+//await LoadSecret("tradeport/dev/user-mgmt/mssql-eks");
+//await LoadSecret("tradeport/dev/user-mgmt/jwt");
+//await LoadSecret("tradeport/dev/user-mgmt/google");
 
 // Register EF Core with SQL Server (uses ConnectionStrings:UserMgmtDb from appsettings.Development.json)
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -137,7 +137,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddSingleton<IJwtService, JwtService>();
 
 var app = builder.Build();
-
+app.MapGet("/health", () => "OK"); // Health endpoints
+app.MapGet("/ready", () => "Ready");
 
 // ✅ Swagger UI for Dev
 if (app.Environment.IsDevelopment())
@@ -149,7 +150,7 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "swagger"; // Access at http://localhost:7237/swagger
     });
 }
-
+app.MapGet("/", () => Results.Redirect("/swagger"));
 // ✅ Cross-Origin Isolation Headers to prevent COOP/COEP warnings
 app.Use(async (context, next) =>
 {

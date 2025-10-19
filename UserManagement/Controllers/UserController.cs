@@ -133,7 +133,7 @@ namespace UserManagement.Controllers
         }
 
 
-        [Authorize]       
+        //[Authorize]       
         [HttpPut]
         [Route("{userID}")]
         public async Task<IActionResult> UpdateUserByID(Guid userID, [FromBody] UserDTO userDTO)

@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace UserManagement.Tests.Controllers
 {
+    //unit tests for UserController
     public class UserControllerTests
     {
         private readonly Mock<IJwtService> _mockJwtService;
